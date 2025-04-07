@@ -1,4 +1,3 @@
-// piutang.dart
 import 'package:flutter/material.dart';
 import './detailpiutang.dart';
 import './addpiutang.dart';
@@ -9,15 +8,29 @@ class PiutangPage extends StatefulWidget {
 }
 
 class _PiutangPageState extends State<PiutangPage> {
-  List<Map<String, dynamic>> piutangList = [];
+  List<Map<String, dynamic>> daftarPiutang = [];
 
-  int get totalPiutang => piutangList.fold(0, (sum, item) => sum + (item['sisa'] as int));
+  int get totalPiutang => daftarPiutang.fold(0, (sum, item) => sum + (item['sisa'] as int));
 
   void tambahPiutangBaru(Map<String, dynamic> data) {
     setState(() {
-      piutangList.add(data);
+      daftarPiutang.add(data);
     });
   }
+
+  void updatePiutang(int index, Map<String, dynamic> updatedData) {
+    setState(() {
+      daftarPiutang[index] = updatedData;
+    });
+  }
+
+  void hapusPiutang(int index) {
+    setState(() {
+      daftarPiutang.removeAt(index);
+    });
+  }
+
+  
 
   @override
   Widget build(BuildContext context) {
@@ -26,13 +39,16 @@ class _PiutangPageState extends State<PiutangPage> {
         title: Text('Piutang'),
         actions: [
           TextButton(
-            onPressed: () {
-              Navigator.push(
+            onPressed: () async {
+              final result = await Navigator.push(
                 context,
                 MaterialPageRoute(
                   builder: (_) => AddPiutangPage(onAdd: tambahPiutangBaru),
                 ),
               );
+              if (result != null) {
+                tambahPiutangBaru(result);
+              }
             },
             child: Text('Tambah', style: TextStyle(color: Colors.white)),
           ),
@@ -49,32 +65,39 @@ class _PiutangPageState extends State<PiutangPage> {
             SizedBox(height: 20),
             Text('BELUM DITERIMA', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
             SizedBox(height: 10),
-            piutangList.isEmpty
+            daftarPiutang.isEmpty
                 ? Expanded(child: Center(child: Text("Belum ada piutang")))
                 : Expanded(
                     child: ListView.builder(
-                      itemCount: piutangList.length,
+                      itemCount: daftarPiutang.length,
                       itemBuilder: (context, index) {
-                        final piutang = piutangList[index];
-                        return ListTile(
-                          title: Text(piutang['nama']),
-                          subtitle: Text("Rp${piutang['sisa']}"),
-                          trailing: Icon(Icons.chevron_right),
-                          onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (_) => DetailPiutangPage(
-                                  nama: piutang['nama'],
-                                  deskripsi: piutang['deskripsi'],
-                                  tanggal: piutang['tanggal'],
-                                  jumlahPinjaman: piutang['jumlah'],
-                                  sisaPinjaman: piutang['sisa'],
-                                  status: piutang['status'],
+                        final piutang = daftarPiutang[index];
+                        final sisaPersen = (piutang['sisa'] / piutang['jumlah'] * 100).toStringAsFixed(0);
+                        return Card(
+                          child: ListTile(
+                            title: Text(piutang['nama']),
+                            subtitle: Text("Rp${piutang['sisa']} - sisa $sisaPersen% \nJatuh tempo: ${piutang['tanggal']}"),
+                            trailing: Text(piutang['status'], style: TextStyle(
+                              color: piutang['status'] == 'Lunas' ? Colors.green : Colors.red,
+                              fontWeight: FontWeight.bold,
+                            )),
+                            onTap: () async {
+                              final result = await Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) => DetailPiutangPage(
+                                    data: piutang,
+                                    ),
                                 ),
-                              ),
-                            );
-                          },
+                              );
+
+                              if (result == 'deleted') {
+                                hapusPiutang(index);
+                              } else if (result is Map<String, dynamic>) {
+                                updatePiutang(index, result);
+                              }
+                            },
+                          ),
                         );
                       },
                     ),

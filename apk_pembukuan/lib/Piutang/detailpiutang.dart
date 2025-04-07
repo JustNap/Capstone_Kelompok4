@@ -1,29 +1,15 @@
 import 'package:flutter/material.dart';
 
 class DetailPiutangPage extends StatefulWidget {
-  final String nama;
-  final String deskripsi;
-  final String tanggal;
-  final int jumlahPinjaman;
-  final int sisaPinjaman;
-  final String status;
+  final Map<String, dynamic> data;
 
-  const DetailPiutangPage({
-    Key? key,
-    required this.nama,
-    required this.deskripsi,
-    required this.tanggal,
-    required this.jumlahPinjaman,
-    required this.sisaPinjaman,
-    required this.status,
-  }) : super(key: key);
+  const DetailPiutangPage({super.key, required this.data});
 
   @override
-  _DetailPiutangPageState createState() => _DetailPiutangPageState();
+  State<DetailPiutangPage> createState() => _DetailPiutangPageState();
 }
 
 class _DetailPiutangPageState extends State<DetailPiutangPage> {
-  String paymentType = 'cicilan';
   final TextEditingController catatanController = TextEditingController();
   final TextEditingController jumlahController = TextEditingController();
 
@@ -33,151 +19,105 @@ class _DetailPiutangPageState extends State<DetailPiutangPage> {
   @override
   void initState() {
     super.initState();
-    currentSisaPinjaman = widget.sisaPinjaman;
-    currentStatus = widget.status;
+    currentSisaPinjaman = widget.data['sisa'];
+    currentStatus = widget.data['status'];
+  }
+
+  void simpanPembayaran() {
+    int jumlahBayar = int.tryParse(jumlahController.text) ?? 0;
+
+    if (jumlahBayar <= 0) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Jumlah harus lebih dari 0')));
+      return;
+    }
+
+    if (jumlahBayar > currentSisaPinjaman) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Jumlah melebihi sisa pinjaman')));
+      return;
+    }
+
+    setState(() {
+      currentSisaPinjaman -= jumlahBayar;
+      if (currentSisaPinjaman <= 0) {
+        currentStatus = 'Lunas';
+        currentSisaPinjaman = 0;
+      }
+    });
+
+    final updatedData = Map<String, dynamic>.from(widget.data);
+    updatedData['sisa'] = currentSisaPinjaman;
+    updatedData['status'] = currentStatus;
+
+    Navigator.pop(context, updatedData);
+  }
+
+  void hapusPiutang() {
+    showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: Text('Hapus Piutang'),
+        content: Text('Apakah kamu yakin ingin menghapus piutang ini?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context), 
+            child: Text('Batal'),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context); 
+              Navigator.pop(context, 'deleted'); 
+            },
+            child: Text('Hapus', style: TextStyle(color: Colors.red)),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Detail Utang'),
+        title: Text('Detail Piutang'),
         backgroundColor: Colors.blue,
+        actions: [
+          IconButton(
+            icon: Icon(Icons.delete),
+            onPressed: hapusPiutang,
+            tooltip: 'Hapus Piutang',
+          ),
+        ],
       ),
       body: SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                widget.nama,
-                style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-              ),
-              Text(
-                widget.deskripsi,
-                style: TextStyle(fontSize: 18, color: Colors.grey),
-              ),
-              SizedBox(height: 8),
-              Text(
-                'Status: $currentStatus',
-                style: TextStyle(
-                  color: currentStatus == 'Lunas' ? Colors.green : Colors.red,
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              Text(
-                widget.tanggal,
-                style: TextStyle(color: Colors.grey),
-              ),
-              SizedBox(height: 20),
-
-              Text('JUMLAH PINJAMAN', style: TextStyle(fontSize: 16)),
-              Text(
-                'Rp ${widget.jumlahPinjaman}',
-                style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold),
-              ),
-
-              SizedBox(height: 20),
-              Text('SISA PINJAMAN', style: TextStyle(fontSize: 16)),
-              Text(
-                'Rp $currentSisaPinjaman',
-                style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold),
-              ),
-
-              SizedBox(height: 20),
-              Text('JENIS PEMBAYARAN', style: TextStyle(fontSize: 16)),
-              Row(
-                children: [
-                  Expanded(
-                    child: RadioListTile(
-                      title: Text('Cicilan'),
-                      value: 'cicilan',
-                      groupValue: paymentType,
-                      onChanged: (value) {
-                        setState(() {
-                          paymentType = value.toString();
-                        });
-                      },
-                    ),
-                  ),
-                  Expanded(
-                    child: RadioListTile(
-                      title: Text('Lunas'),
-                      value: 'lunas',
-                      groupValue: paymentType,
-                      onChanged: (value) {
-                        setState(() {
-                          paymentType = value.toString();
-                        });
-                      },
-                    ),
-                  ),
-                ],
-              ),
-
-              SizedBox(height: 20),
-              Text('CATATAN', style: TextStyle(fontSize: 16)),
-              TextField(
-                controller: catatanController,
-                decoration: InputDecoration(
-                  hintText: 'Pinjaman ini dibayar dengan cara cicilan',
-                  border: OutlineInputBorder(),
-                ),
-                maxLines: 3,
-              ),
-
-              SizedBox(height: 20),
-              Text('Masukkan jumlah', style: TextStyle(fontSize: 16)),
-              TextField(
-                controller: jumlahController,
-                decoration: InputDecoration(
-                  hintText: 'Jumlah',
-                  border: OutlineInputBorder(),
-                ),
-                keyboardType: TextInputType.number,
-              ),
-
-              SizedBox(height: 20),
-              ElevatedButton(
-                onPressed: () {
-                  int jumlahBayar = int.tryParse(jumlahController.text) ?? 0;
-
-                  if (jumlahBayar <= 0) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text('Jumlah harus lebih dari 0')),
-                    );
-                    return;
-                  }
-
-                  if (jumlahBayar > currentSisaPinjaman) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text('Jumlah melebihi sisa pinjaman')),
-                    );
-                    return;
-                  }
-
-                  setState(() {
-                    currentSisaPinjaman -= jumlahBayar;
-
-                    if (currentSisaPinjaman <= 0) {
-                      currentStatus = 'Lunas';
-                      currentSisaPinjaman = 0;
-                    }
-                  });
-                  
-                  
-                  print('Jumlah dibayar: $jumlahBayar');
-                  print('Jenis pembayaran: $paymentType');
-                  print('Catatan: ${catatanController.text}');
-                },
-                child: Text('SIMPAN'),
-                style: ElevatedButton.styleFrom(backgroundColor: Colors.blue),
-              ),
-            ],
+        padding: EdgeInsets.all(16),
+        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Text(widget.data['nama'], style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
+          Text(widget.data['deskripsi'], style: TextStyle(fontSize: 16, color: Colors.grey)),
+          SizedBox(height: 8),
+          Text('Status: $currentStatus', style: TextStyle(color: currentStatus == 'Lunas' ? Colors.green : Colors.red)),
+          Text('Tanggal jatuh tempo: ${widget.data['tanggal']}'),
+          SizedBox(height: 20),
+          Text('Jumlah Pinjaman: Rp ${widget.data['jumlah']}', style: TextStyle(fontSize: 16)),
+          Text('Sisa Pinjaman: Rp $currentSisaPinjaman', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+          SizedBox(height: 20),
+          TextField(
+            controller: jumlahController,
+            decoration: InputDecoration(labelText: 'Masukkan jumlah yang dibayar', border: OutlineInputBorder()),
+            keyboardType: TextInputType.number,
           ),
-        ),
+          SizedBox(height: 12),
+          TextField(
+            controller: catatanController,
+            decoration: InputDecoration(labelText: 'Catatan', border: OutlineInputBorder()),
+            maxLines: 3,
+          ),
+          SizedBox(height: 20),
+          ElevatedButton(
+            onPressed: simpanPembayaran,
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.blue),
+            child: Text('SIMPAN'),
+          )
+        ]),
       ),
     );
   }
