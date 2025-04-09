@@ -1,3 +1,4 @@
+import 'package:apk_pembukuan/penjualan/penjualan.dart';
 import 'package:flutter/material.dart';
 
 class Homepage extends StatelessWidget {
@@ -48,11 +49,15 @@ class Homepage extends StatelessWidget {
                   crossAxisSpacing: 16,
                   mainAxisSpacing: 16,
                   children: [
-                    _buildMenuItem(Icons.receipt_long, 'Laporan Keuangan'),
-                    _buildMenuItem(Icons.inventory, 'Barang/Jasa'),
-                    _buildMenuItem(Icons.point_of_sale, 'Penjualan'),
-                    _buildMenuItem(Icons.attach_money, 'Piutang'),
-                    _buildMenuItem(Icons.analytics, 'Analisis Keuangan'),
+                    _buildMenuItem(Icons.receipt_long, 'Laporan Keuangan',(){}),
+                    _buildMenuItem(Icons.inventory, 'Barang/Jasa', (){}),
+                    _buildMenuItem(Icons.point_of_sale, 'Penjualan', (){
+                      Navigator.of(context).push(
+                        MaterialPageRoute(builder: (context) => const PenjualanPage()),
+                      );
+                    }),
+                    _buildMenuItem(Icons.attach_money, 'Piutang', (){}),
+                    _buildMenuItem(Icons.analytics, 'Analisis Keuangan', (){}),
                   ],
                 ),
               ),
@@ -63,23 +68,21 @@ class Homepage extends StatelessWidget {
     );
   }
 
-  Widget _buildMenuItem(IconData icon, String label) {
-    return GestureDetector(
-      onTap: () {
-      
-      },
-      child: Card(
-        elevation: 4,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(icon, size: 48, color: Colors.blueAccent),
-            const SizedBox(height: 12),
-            Text(label, style: const TextStyle(fontSize: 16)),
-          ],
-        ),
+  Widget _buildMenuItem(IconData icon, String label, VoidCallback onTap) {
+  return GestureDetector(
+    onTap: onTap,
+    child: Card(
+      elevation: 4,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(icon, size: 48, color: Colors.blueAccent),
+          const SizedBox(height: 12),
+          Text(label, style: const TextStyle(fontSize: 16)),
+        ],
       ),
-    );
-  }
+    ),
+  );
+}
 }
