@@ -1,5 +1,7 @@
 import 'package:apk_pembukuan/components/my_button.dart';
+import 'package:apk_pembukuan/components/my_loading_circle.dart';
 import 'package:apk_pembukuan/components/text_field.dart';
+import 'package:apk_pembukuan/services/auth/auth_service.dart';
 import 'package:flutter/material.dart';
 
 /*
@@ -28,11 +30,58 @@ class RegisterPage extends StatefulWidget {
 }
 
 class _RegisterPageState extends State<RegisterPage> {
+  // access auth service
+  final _auth = AuthService();
+
   // text controllers
   final TextEditingController nameController = TextEditingController();
   final TextEditingController emailController = TextEditingController();
   final TextEditingController pwController = TextEditingController();
   final TextEditingController confirmPwController = TextEditingController();
+
+  // register button tapped
+  void register() async {
+    // password match -> create user
+    if (pwController.text == confirmPwController.text) {
+      // show loading circle
+      showLoadingCircle(context);
+      // attempt to register new user
+      try {
+        //trying to register
+        await _auth.registerEmailPassword(
+            emailController.text, pwController.text);
+
+        // finished loading
+        if (mounted) hideLoadingCircle(context);
+      }
+
+      // catch any errors
+      catch (e) {
+        // finshed loading
+        if (mounted) hideLoadingCircle(context);
+
+        // let user know of the error
+        if (mounted) {
+          showDialog(
+            context: context,
+            builder: (context) => AlertDialog(
+              title: Text(e.toString()),
+            ),
+          );
+        }
+      }
+    }
+
+    // password don't match -> show error
+    else {
+      showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: Text("Passwords don't match!"),
+        ),
+      );
+    }
+  }
 
   // Build UI
   @override
@@ -116,8 +165,8 @@ class _RegisterPageState extends State<RegisterPage> {
                   height: 25,
                 ),
 
-                // sign in button
-                MyButton(text: "Register", onTap: () {}),
+                // Register button
+                MyButton(text: "Register", onTap: register),
 
                 const SizedBox(
                   height: 50,

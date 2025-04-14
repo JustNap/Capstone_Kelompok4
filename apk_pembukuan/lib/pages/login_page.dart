@@ -37,21 +37,18 @@ class _LoginPageState extends State<LoginPage> {
       if (mounted) {
         hideLoadingCircle(context);
         Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(
-                builder: (context) => const Homepage(
-                      userName: "Nama",
-                    )));
+            context, MaterialPageRoute(builder: (context) => const Homepage()));
       }
       ;
     } catch (e) {
       // Error handling
       if (mounted) {
         hideLoadingCircle(context);
-        print(e.toString());
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("Login failed: ${e.toString()}")),
-        );
+        showDialog(
+            context: context,
+            builder: (context) => AlertDialog(
+                  title: Text(e.toString()),
+                ));
       }
     }
   }
