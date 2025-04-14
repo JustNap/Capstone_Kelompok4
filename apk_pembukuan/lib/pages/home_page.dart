@@ -1,14 +1,88 @@
 import 'package:flutter/material.dart';
+import 'package:apk_pembukuan/services/auth/auth_service.dart';
+import 'package:apk_pembukuan/pages/login_page.dart';
 
 class Homepage extends StatelessWidget {
   final String userName;
 
   const Homepage({super.key, this.userName = "Nama User"});
 
+  // Fungsi untuk logout
+  void logout(BuildContext context) async {
+    try {
+      // Panggil logout dari AuthService
+      await AuthService().logout();
+
+      // Redirect ke halaman login setelah logout
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (context) => LoginPage(onTap: () {}),
+        ),
+      );
+    } catch (e) {
+      print("Error saat logout: $e");
+    }
+  }
+
+  // Fungsi untuk menampilkan bottom sheet dengan opsi
+  void _showProfileMenu(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      builder: (BuildContext context) {
+        return Container(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Pilihan menu (misalnya Profil)
+              ListTile(
+                leading: const Icon(Icons.person),
+                title: const Text('Profil'),
+                onTap: () {
+                  // Aksi saat pilih profil
+                  print("Profil dipilih");
+                },
+              ),
+              const Divider(),
+              // Pilihan logout
+              ListTile(
+                leading: const Icon(Icons.logout),
+                title: const Text('Logout'),
+                onTap: () {
+                  // Panggil fungsi logout
+                  logout(context);
+                },
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
+      appBar: AppBar(
+        title: const Text("Homepage"),
+        actions: [
+          GestureDetector(
+            onTap: () => _showProfileMenu(
+                context), // Tampilkan menu saat logo profil ditekan
+            child: CircleAvatar(
+              backgroundColor: Colors.blueAccent.withOpacity(0.15),
+              radius: 24,
+              child: const Icon(
+                Icons.person,
+                size: 28,
+                color: Colors.blueAccent,
+              ),
+            ),
+          ),
+        ],
+      ),
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(16.0),
@@ -22,18 +96,6 @@ class Homepage extends StatelessWidget {
                     style: const TextStyle(
                       fontSize: 24,
                       fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  GestureDetector(
-                    onTap: () {},
-                    child: CircleAvatar(
-                      backgroundColor: Colors.blueAccent.withOpacity(0.15),
-                      radius: 24,
-                      child: const Icon(
-                        Icons.person,
-                        size: 28,
-                        color: Colors.blueAccent,
-                      ),
                     ),
                   ),
                 ],

@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "798200524466",
+    "project_id": "app-keuangan-softdev",
+    "storage_bucket": "app-keuangan-softdev.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:798200524466:android:111bb155e8052ce23423ab",
+        "android_client_info": {
+          "package_name": "com.example.apk_pembukuan"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCgBjcjmnLmJtpGjW85mmW2xPgLGlMHfqc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

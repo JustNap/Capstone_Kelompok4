@@ -20,7 +20,8 @@ Jika user sudah memiliki akun, mereka dapat ke halaman login dari sini
 */
 
 class RegisterPage extends StatefulWidget {
-  const RegisterPage({super.key});
+  final void Function()? onTap;
+  const RegisterPage({super.key, required this.onTap});
 
   @override
   State<RegisterPage> createState() => _RegisterPageState();
@@ -54,7 +55,7 @@ class _RegisterPageState extends State<RegisterPage> {
 
                 // Logo
                 Icon(
-                  Icons.lock_open_rounded,
+                  Icons.person,
                   size: 72,
                   color: Colors.blueAccent,
                 ),
@@ -134,7 +135,7 @@ class _RegisterPageState extends State<RegisterPage> {
                       width: 5,
                     ),
                     GestureDetector(
-                      onTap: () {},
+                      onTap: widget.onTap,
                       child: Text(
                         "Login",
                         style: TextStyle(

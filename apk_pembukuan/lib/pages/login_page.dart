@@ -1,18 +1,60 @@
 import 'package:apk_pembukuan/components/my_button.dart';
+import 'package:apk_pembukuan/components/my_loading_circle.dart';
 import 'package:apk_pembukuan/components/text_field.dart';
+import 'package:apk_pembukuan/pages/home_page.dart';
+import 'package:apk_pembukuan/services/auth/auth_service.dart';
 import 'package:flutter/material.dart';
 
 class LoginPage extends StatefulWidget {
-  const LoginPage({super.key});
+  final void Function()? onTap;
+  const LoginPage({super.key, required this.onTap});
 
   @override
   State<LoginPage> createState() => _LoginPageState();
 }
 
 class _LoginPageState extends State<LoginPage> {
+  // access auth service
+  final _auth = AuthService();
+
   // text controllers
   final TextEditingController emailController = TextEditingController();
   final TextEditingController pwController = TextEditingController();
+
+  // login method
+  void login() async {
+    // show loading circle
+    showLoadingCircle(context);
+
+    try {
+      // trying to login
+      await _auth.loginEmailPassword(
+        emailController.text,
+        pwController.text,
+      );
+
+      // finished loading
+      if (mounted) {
+        hideLoadingCircle(context);
+        Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+                builder: (context) => const Homepage(
+                      userName: "Nama",
+                    )));
+      }
+      ;
+    } catch (e) {
+      // Error handling
+      if (mounted) {
+        hideLoadingCircle(context);
+        print(e.toString());
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Login failed: ${e.toString()}")),
+        );
+      }
+    }
+  }
 
   // Build UI
   @override
@@ -91,7 +133,10 @@ class _LoginPageState extends State<LoginPage> {
                 ),
 
                 // sign in button
-                MyButton(text: "Login", onTap: () {}),
+                MyButton(
+                  text: "Login",
+                  onTap: login,
+                ),
 
                 const SizedBox(
                   height: 50,
@@ -109,7 +154,7 @@ class _LoginPageState extends State<LoginPage> {
                       width: 5,
                     ),
                     GestureDetector(
-                      onTap: () {},
+                      onTap: widget.onTap,
                       child: Text(
                         "Register now",
                         style: TextStyle(
