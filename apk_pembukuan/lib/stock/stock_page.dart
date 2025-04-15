@@ -19,7 +19,9 @@ class _StockPageState extends State<StockPage> {
   final jumlahController = TextEditingController();
   final hargaController = TextEditingController();
 
-  void addItem() {
+  String? editingId;
+
+  void saveItem() {
     if (namaController.text.isEmpty ||
         kategoriController.text.isEmpty ||
         jenisController.text.isEmpty ||
@@ -29,18 +31,35 @@ class _StockPageState extends State<StockPage> {
         hargaController.text.isEmpty) return;
 
     setState(() {
-      stockItems.add(
-        StockItem(
-          id: DateTime.now().millisecondsSinceEpoch.toString(),
-          nama: namaController.text,
-          kategori: kategoriController.text,
-          jenis: jenisController.text,
-          kode: kodeController.text,
-          satuan: satuanController.text,
-          jumlah: int.parse(jumlahController.text),
-          harga: double.parse(hargaController.text),
-        ),
-      );
+      if (editingId == null) {
+        stockItems.add(
+          StockItem(
+            id: DateTime.now().millisecondsSinceEpoch.toString(),
+            nama: namaController.text,
+            kategori: kategoriController.text,
+            jenis: jenisController.text,
+            kode: kodeController.text,
+            satuan: satuanController.text,
+            jumlah: int.parse(jumlahController.text),
+            harga: double.parse(hargaController.text),
+          ),
+        );
+      } else {
+        final index = stockItems.indexWhere((item) => item.id == editingId);
+        if (index != -1) {
+          stockItems[index] = StockItem(
+            id: editingId!,
+            nama: namaController.text,
+            kategori: kategoriController.text,
+            jenis: jenisController.text,
+            kode: kodeController.text,
+            satuan: satuanController.text,
+            jumlah: int.parse(jumlahController.text),
+            harga: double.parse(hargaController.text),
+          );
+        }
+        editingId = null;
+      }
 
       namaController.clear();
       kategoriController.clear();
@@ -52,9 +71,32 @@ class _StockPageState extends State<StockPage> {
     });
   }
 
+  void startEdit(StockItem item) {
+    setState(() {
+      editingId = item.id;
+      namaController.text = item.nama;
+      kategoriController.text = item.kategori;
+      jenisController.text = item.jenis;
+      kodeController.text = item.kode;
+      satuanController.text = item.satuan;
+      jumlahController.text = item.jumlah.toString();
+      hargaController.text = item.harga.toString();
+    });
+  }
+
   void deleteItem(String id) {
     setState(() {
       stockItems.removeWhere((item) => item.id == id);
+      if (editingId == id) {
+        editingId = null;
+        namaController.clear();
+        kategoriController.clear();
+        jenisController.clear();
+        kodeController.clear();
+        satuanController.clear();
+        jumlahController.clear();
+        hargaController.clear();
+      }
     });
   }
 
@@ -99,8 +141,9 @@ class _StockPageState extends State<StockPage> {
               ),
               const SizedBox(height: 10),
               ElevatedButton(
-                onPressed: addItem,
-                child: const Text('Tambah Stok'),
+                onPressed: saveItem,
+                child: Text(
+                    editingId == null ? 'Tambah Stok' : 'Simpan Perubahan'),
               ),
               const Divider(),
               ListView.builder(
@@ -117,9 +160,18 @@ class _StockPageState extends State<StockPage> {
                         'Jumlah: ${item.jumlah} ${item.satuan} | Harga: Rp${item.harga.toStringAsFixed(0)}',
                       ),
                       isThreeLine: true,
-                      trailing: IconButton(
-                        icon: const Icon(Icons.delete, color: Colors.red),
-                        onPressed: () => deleteItem(item.id),
+                      trailing: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          IconButton(
+                            icon: const Icon(Icons.edit, color: Colors.blue),
+                            onPressed: () => startEdit(item),
+                          ),
+                          IconButton(
+                            icon: const Icon(Icons.delete, color: Colors.red),
+                            onPressed: () => deleteItem(item.id),
+                          ),
+                        ],
                       ),
                     ),
                   );
