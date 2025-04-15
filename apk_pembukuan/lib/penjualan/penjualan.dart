@@ -1,3 +1,4 @@
+import 'package:apk_pembukuan/penjualan/data_penjualan.dart';
 import 'package:flutter/material.dart';
 
 class PenjualanPage extends StatelessWidget {
@@ -8,7 +9,7 @@ class PenjualanPage extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Penjualan'),
-        backgroundColor: Colors.blue, // bisa pakai color1 kalau pakai file color.dart
+        backgroundColor: Colors.blue,
       ),
       body: Center(
         child: Column(
@@ -29,7 +30,11 @@ class PenjualanPage extends StatelessWidget {
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () {
-          // untuk halaman tambah daftar transaksi 
+          Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (context) => DataPenjualanPage(transaksiId: 1), // bisa diganti nanti
+            ),
+          );
         },
         backgroundColor: Colors.blue,
         child: const Icon(Icons.add),
