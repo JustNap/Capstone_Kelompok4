@@ -38,7 +38,13 @@ class _DataPenjualanPageState extends State<DataPenjualanPage> {
     print('Harga: $harga');
     print('Total: ${totalHarga}');
 
-    Navigator.pop(context);
+    Navigator.pop(context, {
+      'id': widget.transaksiId,
+      'nama': namaBarang,
+      'jumlah': jumlah,
+      'harga': harga,
+      'total': totalHarga,
+    });
   }
 
   @override
