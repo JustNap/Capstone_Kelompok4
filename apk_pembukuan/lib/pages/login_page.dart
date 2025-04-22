@@ -3,6 +3,7 @@ import 'package:apk_pembukuan/components/my_loading_circle.dart';
 import 'package:apk_pembukuan/components/text_field.dart';
 import 'package:apk_pembukuan/pages/home_page.dart';
 import 'package:apk_pembukuan/services/auth/auth_service.dart';
+import 'package:apk_pembukuan/pages/reset_password_page.dart';
 import 'package:flutter/material.dart';
 
 class LoginPage extends StatefulWidget {
@@ -37,7 +38,7 @@ class _LoginPageState extends State<LoginPage> {
       if (mounted) {
         hideLoadingCircle(context);
         Navigator.pushReplacement(
-            context, MaterialPageRoute(builder: (context) => const Homepage()));
+            context, MaterialPageRoute(builder: (context) => Homepage()));
       }
       ;
     } catch (e) {
@@ -53,117 +54,99 @@ class _LoginPageState extends State<LoginPage> {
     }
   }
 
-  // Build UI
   @override
   Widget build(BuildContext context) {
-    // Scaffold
     return Scaffold(
       backgroundColor: Colors.white,
-
-      // Body
+      resizeToAvoidBottomInset:
+          true, // penting agar body menyesuaikan saat keyboard muncul
       body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 25.0),
-          child: Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const SizedBox(
-                  height: 50,
-                ),
-
-                // Logo
-                Icon(
-                  Icons.lock_open_rounded,
-                  size: 72,
-                  color: Colors.blueAccent,
-                ),
-
-                const SizedBox(
-                  height: 50,
-                ),
-
-                // Welcome
-                Text(
-                  "Welcome back Bos!",
-                  style: TextStyle(
-                    color: Colors.blueGrey,
-                    fontSize: 16,
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            return SingleChildScrollView(
+              reverse: true,
+              child: ConstrainedBox(
+                constraints: BoxConstraints(minHeight: constraints.maxHeight),
+                child: IntrinsicHeight(
+                  child: Padding(
+                    padding: EdgeInsets.fromLTRB(
+                      25,
+                      0,
+                      25,
+                      MediaQuery.of(context).viewInsets.bottom + 25,
+                    ),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.lock_open_rounded,
+                            size: 72, color: Colors.blueAccent),
+                        const SizedBox(height: 30),
+                        Text(
+                          "Welcome back Bos!",
+                          style:
+                              TextStyle(color: Colors.blueGrey, fontSize: 16),
+                        ),
+                        const SizedBox(height: 25),
+                        MyTextField(
+                          controller: emailController,
+                          hintText: "Enter Email",
+                          obscureText: false,
+                        ),
+                        const SizedBox(height: 10),
+                        MyTextField(
+                          controller: pwController,
+                          hintText: "Enter Password",
+                          obscureText: true,
+                        ),
+                        const SizedBox(height: 10),
+                        Align(
+                          alignment: Alignment.centerRight,
+                          child: GestureDetector(
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                    builder: (context) =>
+                                        const ResetPasswordPage()),
+                              );
+                            },
+                            child: Text(
+                              "Forgot password?",
+                              style: TextStyle(
+                                color: Colors.blueGrey.shade300,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 25),
+                        MyButton(text: "Login", onTap: login),
+                        const SizedBox(height: 30),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Text("Not a member?",
+                                style: TextStyle(color: Colors.blueGrey)),
+                            const SizedBox(width: 5),
+                            GestureDetector(
+                              onTap: widget.onTap,
+                              child: Text(
+                                "Register now",
+                                style: TextStyle(
+                                  color: Colors.blueGrey,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
                   ),
                 ),
-
-                const SizedBox(
-                  height: 25,
-                ),
-
-                // email textfield
-                MyTextField(
-                    controller: emailController,
-                    hintText: "Enter Email",
-                    obscureText: false),
-
-                const SizedBox(
-                  height: 10,
-                ),
-
-                // password textfield
-                MyTextField(
-                    controller: pwController,
-                    hintText: "Enter Password",
-                    obscureText: true),
-
-                const SizedBox(
-                  height: 10,
-                ),
-
-                // forgot password?
-                Align(
-                  alignment: Alignment.centerRight,
-                  child: Text("Forgot password?",
-                      style: TextStyle(
-                          color: Colors.blueGrey.shade300,
-                          fontWeight: FontWeight.bold)),
-                ),
-
-                const SizedBox(
-                  height: 25,
-                ),
-
-                // sign in button
-                MyButton(
-                  text: "Login",
-                  onTap: login,
-                ),
-
-                const SizedBox(
-                  height: 50,
-                ),
-
-                // register now
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text(
-                      "Not a member?",
-                      style: TextStyle(color: Colors.blueGrey),
-                    ),
-                    const SizedBox(
-                      width: 5,
-                    ),
-                    GestureDetector(
-                      onTap: widget.onTap,
-                      child: Text(
-                        "Register now",
-                        style: TextStyle(
-                            color: Colors.blueGrey,
-                            fontWeight: FontWeight.bold),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
+              ),
+            );
+          },
         ),
       ),
     );

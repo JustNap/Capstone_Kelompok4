@@ -2,6 +2,7 @@ import 'package:apk_pembukuan/components/my_button.dart';
 import 'package:apk_pembukuan/components/my_loading_circle.dart';
 import 'package:apk_pembukuan/components/text_field.dart';
 import 'package:apk_pembukuan/services/auth/auth_service.dart';
+import 'package:apk_pembukuan/services/database/database_service.dart';
 import 'package:flutter/material.dart';
 
 /*
@@ -32,6 +33,7 @@ class RegisterPage extends StatefulWidget {
 class _RegisterPageState extends State<RegisterPage> {
   // access auth service
   final _auth = AuthService();
+  final _db = DatabaseService();
 
   // text controllers
   final TextEditingController nameController = TextEditingController();
@@ -53,6 +55,12 @@ class _RegisterPageState extends State<RegisterPage> {
 
         // finished loading
         if (mounted) hideLoadingCircle(context);
+
+        // once registered, create and save user profile in database
+        await _db.saveUserInfoInFirebase(
+          name: nameController.text,
+          email: emailController.text,
+        );
       }
 
       // catch any errors
@@ -92,111 +100,85 @@ class _RegisterPageState extends State<RegisterPage> {
 
       // Body
       body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 25.0),
-          child: Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const SizedBox(
-                  height: 50,
-                ),
-
-                // Logo
-                Icon(
-                  Icons.person,
-                  size: 72,
-                  color: Colors.blueAccent,
-                ),
-
-                const SizedBox(
-                  height: 50,
-                ),
-
-                // pesan buat akun
-                Text(
-                  "Let's create an account",
-                  style: TextStyle(
-                    color: Colors.blueGrey,
-                    fontSize: 16,
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            return SingleChildScrollView(
+              reverse: true,
+              child: ConstrainedBox(
+                constraints: BoxConstraints(minHeight: constraints.maxHeight),
+                child: IntrinsicHeight(
+                  child: Padding(
+                    padding: EdgeInsets.fromLTRB(
+                      25,
+                      0,
+                      25,
+                      MediaQuery.of(context).viewInsets.bottom + 25,
+                    ),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const SizedBox(height: 50),
+                        Icon(Icons.person, size: 72, color: Colors.blueAccent),
+                        const SizedBox(height: 30),
+                        Text(
+                          "Let's create an account",
+                          style: TextStyle(
+                            color: Colors.blueGrey,
+                            fontSize: 16,
+                          ),
+                        ),
+                        const SizedBox(height: 25),
+                        MyTextField(
+                          controller: nameController,
+                          hintText: "Enter Name",
+                          obscureText: false,
+                        ),
+                        const SizedBox(height: 10),
+                        MyTextField(
+                          controller: emailController,
+                          hintText: "Enter Email",
+                          obscureText: false,
+                        ),
+                        const SizedBox(height: 10),
+                        MyTextField(
+                          controller: pwController,
+                          hintText: "Enter Password",
+                          obscureText: true,
+                        ),
+                        const SizedBox(height: 10),
+                        MyTextField(
+                          controller: confirmPwController,
+                          hintText: "Confirm Password",
+                          obscureText: true,
+                        ),
+                        const SizedBox(height: 25),
+                        MyButton(text: "Register", onTap: register),
+                        const SizedBox(height: 30),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Text("Already a member?",
+                                style: TextStyle(color: Colors.blueGrey)),
+                            const SizedBox(width: 5),
+                            GestureDetector(
+                              onTap: widget.onTap,
+                              child: Text(
+                                "Login",
+                                style: TextStyle(
+                                  color: Colors.blueGrey,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
                   ),
                 ),
-
-                const SizedBox(
-                  height: 25,
-                ),
-
-                // name textfield
-                MyTextField(
-                    controller: nameController,
-                    hintText: "Enter Name",
-                    obscureText: false),
-
-                const SizedBox(
-                  height: 10,
-                ),
-                // email textfield
-                MyTextField(
-                    controller: emailController,
-                    hintText: "Enter Email",
-                    obscureText: false),
-
-                const SizedBox(
-                  height: 10,
-                ),
-
-                // password textfield
-                MyTextField(
-                    controller: pwController,
-                    hintText: "Enter Password",
-                    obscureText: true),
-
-                const SizedBox(
-                  height: 10,
-                ),
-
-                // confirm password textfield
-                MyTextField(
-                    controller: confirmPwController,
-                    hintText: "Confirm Password",
-                    obscureText: true),
-
-                const SizedBox(
-                  height: 25,
-                ),
-
-                // Register button
-                MyButton(text: "Register", onTap: register),
-
-                const SizedBox(
-                  height: 50,
-                ),
-
-                // already a member? login
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text(
-                      "Already a member?",
-                      style: TextStyle(color: Colors.blueGrey),
-                    ),
-                    const SizedBox(
-                      width: 5,
-                    ),
-                    GestureDetector(
-                      onTap: widget.onTap,
-                      child: Text(
-                        "Login",
-                        style: TextStyle(
-                            color: Colors.blueGrey,
-                            fontWeight: FontWeight.bold),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
+              ),
+            );
+          },
         ),
       ),
     );
