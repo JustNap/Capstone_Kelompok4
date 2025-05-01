@@ -1,6 +1,7 @@
 import 'package:apk_pembukuan/Piutang/piutang.dart';
 import 'package:apk_pembukuan/Setting/setting.dart';
 import 'package:apk_pembukuan/penjualan/penjualan.dart';
+import 'package:apk_pembukuan/stock/stock_page.dart';
 import 'package:flutter/material.dart';
 
 class Homepage extends StatefulWidget {
@@ -22,7 +23,7 @@ class _HomepageState extends State<Homepage> {
     super.initState();
     _pages.addAll([
       buildPage("Analisis Keuangan"),
-      buildPage("Barang/Jasa"),
+      StockPage(),
       PenjualanPage(),
       PiutangPage(),
       buildPage("Laporan Keuangan"),
