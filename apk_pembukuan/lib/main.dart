@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+//import 'stock/stock_page.dart';
 //import 'Piutang/piutang.dart';
 import 'homepage/homepage.dart';
 // import 'Setting/setting.dart';
