@@ -1,7 +1,7 @@
 import 'package:apk_pembukuan/components/my_button.dart';
 import 'package:apk_pembukuan/components/my_loading_circle.dart';
 import 'package:apk_pembukuan/components/text_field.dart';
-import 'package:apk_pembukuan/pages/home_page.dart';
+import 'package:apk_pembukuan/homepage/homepage.dart';
 import 'package:apk_pembukuan/services/auth/auth_service.dart';
 import 'package:apk_pembukuan/pages/reset_password_page.dart';
 import 'package:flutter/material.dart';

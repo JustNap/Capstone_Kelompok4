@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import '../main.dart';
 import './editprofil.dart';
+import 'package:apk_pembukuan/services/auth/auth_service.dart';
+import 'package:apk_pembukuan/pages/login_page.dart';
 
 class SettingPage extends StatefulWidget {
   const SettingPage({super.key});
@@ -10,6 +12,8 @@ class SettingPage extends StatefulWidget {
 }
 
 class _SettingPageState extends State<SettingPage> {
+  final _auth = AuthService();
+
   bool isDarkMode = themeNotifier.value == ThemeMode.dark;
   bool receiveNotifications = true;
   bool playInBackground = false;
@@ -20,7 +24,6 @@ class _SettingPageState extends State<SettingPage> {
       appBar: AppBar(
         title: const Text("Settings"),
         backgroundColor: Colors.blue,
-        
       ),
       body: ListView(
         padding: const EdgeInsets.all(16),
@@ -79,6 +82,76 @@ class _SettingPageState extends State<SettingPage> {
                 receiveNotifications = val;
               });
             },
+          ),
+          const SizedBox(height: 20),
+          const Divider(),
+          const SizedBox(height: 16),
+          ElevatedButton.icon(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.blue,
+              padding: const EdgeInsets.symmetric(vertical: 14),
+            ),
+            onPressed: () => _confirmLogout(context),
+            icon: const Icon(Icons.logout, color: Colors.black),
+            label: const Text(
+              "Logout",
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                color: Colors.black,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _logout(BuildContext context) async {
+    try {
+      await _auth.logout();
+      Navigator.pushAndRemoveUntil(
+        context,
+        MaterialPageRoute(builder: (_) => LoginPage(onTap: () {})),
+        (route) => false,
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Gagal logout: $e")),
+      );
+    }
+  }
+
+  void _confirmLogout(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text("Konfirmasi"),
+        content: const Text("Apakah Anda yakin ingin logout?"),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(), // Tutup dialog
+            child: const Text(
+              "Batal",
+              style: TextStyle(
+                color: Colors.black,
+              ),
+            ),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.blue,
+            ),
+            onPressed: () {
+              Navigator.of(context).pop(); // Tutup dialog
+              _logout(context); // Lanjut logout
+            },
+            child: const Text(
+              "Logout",
+              style: TextStyle(
+                color: Colors.black,
+              ),
+            ),
           ),
         ],
       ),

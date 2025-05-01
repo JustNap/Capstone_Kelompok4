@@ -3,7 +3,7 @@ import 'package:apk_pembukuan/services/auth/auth_gate.dart';
 import 'package:flutter/material.dart';
 //import 'stock/stock_page.dart';
 //import 'Piutang/piutang.dart';
-import 'homepage/homepage.dart';
+//import 'homepage/homepage.dart';
 // import 'Setting/setting.dart';
 import 'package:firebase_core/firebase_core.dart';
 
@@ -11,7 +11,7 @@ void main() async {
   // firebase setup
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
-  
+
   runApp(MyApp());
 }
 
@@ -28,7 +28,7 @@ class MyApp extends StatelessWidget {
           theme: ThemeData.light(),
           darkTheme: ThemeData.dark(),
           themeMode: currentTheme,
-          home: const AuthGate(), //PiutangPage(), //SettingPage(), 
+          home: const AuthGate(), //PiutangPage(), //SettingPage(),
         );
       },
     );
