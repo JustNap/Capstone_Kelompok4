@@ -1,3 +1,5 @@
+import 'package:apk_pembukuan/Piutang/piutang.dart';
+import 'package:apk_pembukuan/Setting/setting.dart';
 import 'package:apk_pembukuan/penjualan/penjualan.dart';
 import 'package:flutter/material.dart';
 
@@ -22,7 +24,7 @@ class _HomepageState extends State<Homepage> {
       buildPage("Analisis Keuangan"),
       buildPage("Barang/Jasa"),
       PenjualanPage(),
-      buildPage("Piutang"),
+      PiutangPage(),
       buildPage("Laporan Keuangan"),
     ]);
   }
@@ -45,7 +47,10 @@ class _HomepageState extends State<Homepage> {
               ),
               GestureDetector(
                 onTap: () {
-                  // untuk halaman profile
+                  Navigator.push(
+                  context,
+                MaterialPageRoute(builder: (_) => const SettingPage()),
+              );
                 },
                 child: CircleAvatar(
                   backgroundColor: Colors.blueAccent.withOpacity(0.15),
