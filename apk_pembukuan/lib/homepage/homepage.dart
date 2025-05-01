@@ -3,32 +3,61 @@ import 'package:apk_pembukuan/Setting/setting.dart';
 import 'package:apk_pembukuan/penjualan/penjualan.dart';
 import 'package:apk_pembukuan/stock/stock_page.dart';
 import 'package:flutter/material.dart';
+import 'package:apk_pembukuan/models/user.dart';
+import 'package:apk_pembukuan/services/database/database_service.dart';
+import 'package:apk_pembukuan/services/auth/auth_service.dart';
+import 'package:apk_pembukuan/pages/login_page.dart';
 
 class Homepage extends StatefulWidget {
-  final String userName;
-
-  const Homepage({super.key, this.userName = "Nama User"});
+  const Homepage({super.key});
 
   @override
   State<Homepage> createState() => _HomepageState();
 }
 
 class _HomepageState extends State<Homepage> {
-  int _currentIndex = 0;
-
-  final List<Widget> _pages = [];
+  final _auth = AuthService();
+  final _db = DatabaseService();
+  UserProfile? user;
 
   @override
   void initState() {
     super.initState();
-    _pages.addAll([
-      buildPage("Analisis Keuangan"),
-      StockPage(),
-      PenjualanPage(),
-      PiutangPage(),
-      buildPage("Laporan Keuangan"),
-    ]);
+    _loadUserData(); // ini akan memanggil setState saat user selesai dimuat
   }
+
+  void _loadUserData() async {
+    String uid = _auth.getCurrentUid();
+    UserProfile? fetchedUser = await _db.getUserFromFirebase(uid);
+    if (mounted) {
+      setState(() {
+        user = fetchedUser;
+        _pages.addAll([
+          buildPage("Analisis Keuangan"),
+          StockPage(),
+          PenjualanPage(),
+          PiutangPage(),
+          buildPage("Laporan Keuangan"),
+        ]);
+      });
+    }
+  }
+
+  void logout(BuildContext context) async {
+    try {
+      await _auth.logout();
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => LoginPage(onTap: () {})),
+      );
+    } catch (e) {
+      print("Error saat logout: $e");
+    }
+  }
+
+  int _currentIndex = 0;
+
+  final List<Widget> _pages = [];
 
   Widget buildPage(String title) {
     return Padding(
@@ -40,7 +69,7 @@ class _HomepageState extends State<Homepage> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                widget.userName,
+                user!.name,
                 style: const TextStyle(
                   fontSize: 24,
                   fontWeight: FontWeight.bold,
@@ -49,9 +78,9 @@ class _HomepageState extends State<Homepage> {
               GestureDetector(
                 onTap: () {
                   Navigator.push(
-                  context,
-                MaterialPageRoute(builder: (_) => const SettingPage()),
-              );
+                    context,
+                    MaterialPageRoute(builder: (_) => const SettingPage()),
+                  );
                 },
                 child: CircleAvatar(
                   backgroundColor: Colors.blueAccent.withOpacity(0.15),
@@ -80,16 +109,54 @@ class _HomepageState extends State<Homepage> {
     );
   }
 
+  void _showProfileMenu(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      builder: (BuildContext context) {
+        return Container(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ListTile(
+                leading: const Icon(Icons.person),
+                title: const Text('Profil'),
+                onTap: () {
+                  print("Profil dipilih");
+                },
+              ),
+              const Divider(),
+              ListTile(
+                leading: const Icon(Icons.logout),
+                title: const Text('Logout'),
+                onTap: () {
+                  logout(context);
+                },
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
   final List<BottomNavigationBarItem> _navItems = [
     BottomNavigationBarItem(icon: Icon(Icons.analytics), label: "Analisis"),
     BottomNavigationBarItem(icon: Icon(Icons.inventory), label: "Barang"),
-    BottomNavigationBarItem(icon: Icon(Icons.point_of_sale), label: "Penjualan"),
+    BottomNavigationBarItem(
+        icon: Icon(Icons.point_of_sale), label: "Penjualan"),
     BottomNavigationBarItem(icon: Icon(Icons.attach_money), label: "Piutang"),
     BottomNavigationBarItem(icon: Icon(Icons.receipt_long), label: "Laporan"),
   ];
 
   @override
   Widget build(BuildContext context) {
+    if (user == null || _pages.isEmpty) {
+      return const Scaffold(
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
+
     return Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(child: _pages[_currentIndex]),

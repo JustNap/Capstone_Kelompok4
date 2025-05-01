@@ -6,7 +6,7 @@ chek user sudah login atau tidak
 
 */
 
-import 'package:apk_pembukuan/pages/home_page.dart';
+import 'package:apk_pembukuan/homepage/homepage.dart';
 import 'package:apk_pembukuan/services/auth/login_or_register.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
