@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'Piutang/piutang.dart';
+//import 'Piutang/piutang.dart';
+import 'homepage/homepage.dart';
 // import 'Setting/setting.dart';
 void main() {
   runApp(MyApp());
@@ -18,7 +19,7 @@ class MyApp extends StatelessWidget {
           theme: ThemeData.light(),
           darkTheme: ThemeData.dark(),
           themeMode: currentTheme,
-          home: PiutangPage(), //SettingPage(), 
+          home: Homepage() //PiutangPage(), //SettingPage(), 
         );
       },
     );
