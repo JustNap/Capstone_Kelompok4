@@ -57,6 +57,7 @@ class _TambahStockPageState extends State<TambahStockPage> {
     final totalHarga = jumlah * hargaSatuan;
 
     return Scaffold(
+      backgroundColor: Colors.blue.shade50,
       appBar: AppBar(
         title: const Text('Tambah Stok'),
         backgroundColor: Colors.blue,
