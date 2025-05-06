@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import './detailpiutang.dart';
 import './addpiutang.dart';
+import 'package:apk_pembukuan/services/database/database_service.dart';
 
 class PiutangPage extends StatefulWidget {
   @override
@@ -12,25 +13,35 @@ class _PiutangPageState extends State<PiutangPage> {
 
   int get totalPiutang => daftarPiutang.fold(0, (sum, item) => sum + (item['sisa'] as int));
 
-  void tambahPiutangBaru(Map<String, dynamic> data) {
+  @override
+  void initState() {
+    super.initState();
+    loadData();
+  }
+
+  void loadData() async {
+    final data = await DatabaseService().getDaftarPiutang();
     setState(() {
-      daftarPiutang.add(data);
+      daftarPiutang = data;
     });
   }
 
-  void updatePiutang(int index, Map<String, dynamic> updatedData) {
-    setState(() {
-      daftarPiutang[index] = updatedData;
-    });
+  void tambahPiutangBaru(Map<String, dynamic> data) async {
+    await DatabaseService().tambahPiutang(data);
+    loadData();
   }
 
-  void hapusPiutang(int index) {
-    setState(() {
-      daftarPiutang.removeAt(index);
-    });
+  void updatePiutang(int index, Map<String, dynamic> updatedData) async {
+    String id = daftarPiutang[index]['id'];
+    await DatabaseService().updatePiutang(id, updatedData);
+    loadData();
   }
 
-  
+  void hapusPiutang(int index) async {
+    String id = daftarPiutang[index]['id'];
+    await DatabaseService().hapusPiutang(id);
+    loadData();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -50,7 +61,7 @@ class _PiutangPageState extends State<PiutangPage> {
                 tambahPiutangBaru(result);
               }
             },
-            child: Text('Tambah', style: TextStyle(color: Colors.white)),
+            child: Icon (Icons.add, color: Colors.black),
           ),
         ],
         backgroundColor: Colors.blue,
@@ -85,12 +96,9 @@ class _PiutangPageState extends State<PiutangPage> {
                               final result = await Navigator.push(
                                 context,
                                 MaterialPageRoute(
-                                  builder: (_) => DetailPiutangPage(
-                                    data: piutang,
-                                    ),
+                                  builder: (_) => DetailPiutangPage(data: piutang),
                                 ),
                               );
-
                               if (result == 'deleted') {
                                 hapusPiutang(index);
                               } else if (result is Map<String, dynamic>) {

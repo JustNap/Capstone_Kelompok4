@@ -53,4 +53,45 @@ class DatabaseService {
       return null;
     }
   }
+
+
+
+  Future<void> tambahPiutang(Map<String, dynamic> data) async {
+    final uid = _auth.currentUser!.uid;
+    await _db.collection("Users").doc(uid).collection("Piutang").add(data);
+  }
+
+  Future<List<Map<String, dynamic>>> getDaftarPiutang() async {
+    final uid = _auth.currentUser!.uid;
+    final snapshot = await _db
+        .collection("Users")
+        .doc(uid)
+        .collection("Piutang")
+        .get();
+    return snapshot.docs.map((doc) {
+      final data = doc.data();
+      data['id'] = doc.id; // penting untuk update/hapus
+      return data;
+    }).toList();
+  }
+
+  Future<void> updatePiutang(String id, Map<String, dynamic> updatedData) async {
+    final uid = _auth.currentUser!.uid;
+    await _db
+        .collection("Users")
+        .doc(uid)
+        .collection("Piutang")
+        .doc(id)
+        .update(updatedData);
+  }
+
+  Future<void> hapusPiutang(String id) async {
+    final uid = _auth.currentUser!.uid;
+    await _db
+        .collection("Users")
+        .doc(uid)
+        .collection("Piutang")
+        .doc(id)
+        .delete();
+  }
 }
