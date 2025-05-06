@@ -43,9 +43,9 @@ class _StockPageState extends State<StockPage> {
     return Scaffold(
       backgroundColor: Colors.blue.shade50,
       appBar: AppBar(
-          title: const Text('Stok Barang'), backgroundColor: Colors.blue),
+          title: const Text('Barang/Jasa'), backgroundColor: Colors.blue),
       body: stockItems.isEmpty
-          ? const Center(child: Text('Belum ada stok barang.'))
+          ? const Center(child: Text('Belum ada barang/jasa.'))
           : ListView.builder(
               itemCount: stockItems.length,
               itemBuilder: (context, index) {

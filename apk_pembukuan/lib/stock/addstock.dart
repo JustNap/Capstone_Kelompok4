@@ -68,7 +68,7 @@ class _TambahStockPageState extends State<TambahStockPage> {
           children: [
             TextField(
               controller: namaController,
-              decoration: const InputDecoration(labelText: 'Nama Barang'),
+              decoration: const InputDecoration(labelText: 'Nama Barang/Jasa'),
             ),
             TextField(
               controller: kodeController,
