@@ -8,7 +8,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 
 class DatabaseService {
   // get instance of firestore db & auth
-  final _db = FirebaseFirestore.instance;
+  final FirebaseFirestore _db = FirebaseFirestore.instance;
   final _auth = FirebaseAuth.instance;
 
   /*
@@ -53,4 +53,25 @@ class DatabaseService {
       return null;
     }
   }
-}
+
+  Future<void> tambahPenjualan(String uid, Map<String, dynamic> data) async {
+    await _db.collection('Users').doc(uid).collection('penjualan').add({
+      ...data,
+      'tanggal': DateTime.now(),
+    });
+  }
+
+  Future<List<Map<String, dynamic>>> getPenjualan(String uid) async {
+    final snapshot = await _db.collection('Users').doc(uid).collection('penjualan').get();
+    return snapshot.docs.map((doc) {
+      final data = doc.data();
+      data['docId'] = doc.id;
+      return data;
+    }).toList();
+  }
+
+  Future<void> hapusPenjualan(String uid, String docId) async {
+    await _db.collection('Users').doc(uid).collection('penjualan').doc(docId).delete();
+  }
+
+}  
