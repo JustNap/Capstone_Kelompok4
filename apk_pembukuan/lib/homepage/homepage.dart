@@ -6,6 +6,7 @@ import 'package:apk_pembukuan/penjualan/penjualan.dart';
 import 'package:apk_pembukuan/services/auth/auth_service.dart';
 import 'package:apk_pembukuan/services/database/database_service.dart';
 import 'package:apk_pembukuan/stock/stock_page.dart';
+import 'package:apk_pembukuan/laporan/laporankeuangan.dart';
 import 'package:flutter/material.dart';
 
 
