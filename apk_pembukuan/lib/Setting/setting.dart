@@ -1,8 +1,9 @@
+import 'package:apk_pembukuan/services/auth/auth_gate.dart';
 import 'package:flutter/material.dart';
 import '../main.dart';
 import './editprofil.dart';
 import 'package:apk_pembukuan/services/auth/auth_service.dart';
-import 'package:apk_pembukuan/pages/login_page.dart';
+
 
 class SettingPage extends StatefulWidget {
   const SettingPage({super.key});
@@ -112,7 +113,7 @@ class _SettingPageState extends State<SettingPage> {
       await _auth.logout();
       Navigator.pushAndRemoveUntil(
         context,
-        MaterialPageRoute(builder: (_) => LoginPage(onTap: () {})),
+        MaterialPageRoute(builder: (_) => AuthGate()),
         (route) => false,
       );
     } catch (e) {
