@@ -8,7 +8,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 
 class DatabaseService {
   // get instance of firestore db & auth
-  final _db = FirebaseFirestore.instance;
+  final FirebaseFirestore _db = FirebaseFirestore.instance;
   final _auth = FirebaseAuth.instance;
 
   /*
@@ -55,7 +55,6 @@ class DatabaseService {
   }
 
 
-
   Future<void> tambahPiutang(Map<String, dynamic> data) async {
     final uid = _auth.currentUser!.uid;
     await _db.collection("Users").doc(uid).collection("Piutang").add(data);
@@ -70,10 +69,27 @@ class DatabaseService {
         .get();
     return snapshot.docs.map((doc) {
       final data = doc.data();
-      data['id'] = doc.id; // penting untuk update/hapus
+      data['id'] = doc.id;
+      return data;
+    }).toList();
+  }                          
+
+  Future<void> tambahPenjualan(String uid, Map<String, dynamic> data) async {
+    await _db.collection('Users').doc(uid).collection('penjualan').add({
+      ...data,
+      'tanggal': DateTime.now(),
+    });
+  }
+
+  Future<List<Map<String, dynamic>>> getPenjualan(String uid) async {
+    final snapshot = await _db.collection('Users').doc(uid).collection('penjualan').get();
+    return snapshot.docs.map((doc) {
+      final data = doc.data();
+      data['docId'] = doc.id;
       return data;
     }).toList();
   }
+
 
   Future<void> updatePiutang(String id, Map<String, dynamic> updatedData) async {
     final uid = _auth.currentUser!.uid;
@@ -94,4 +110,10 @@ class DatabaseService {
         .doc(id)
         .delete();
   }
-}
+
+  Future<void> hapusPenjualan(String uid, String docId) async {
+    await _db.collection('Users').doc(uid).collection('penjualan').doc(docId).delete();
+  }
+
+}  
+
