@@ -1,5 +1,7 @@
 import 'package:apk_pembukuan/penjualan/data_penjualan.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:apk_pembukuan/services/database/database_service.dart';
 
 class PenjualanPage extends StatefulWidget {
   const PenjualanPage({super.key});
@@ -11,10 +13,34 @@ class PenjualanPage extends StatefulWidget {
 class _PenjualanPageState extends State<PenjualanPage> {
   List<Map<String, dynamic>> transaksiList = [];
 
-  void _tambahTransaksi(Map<String, dynamic> data) {
-    setState(() {
-      transaksiList.add(data);
-    });
+  @override
+  void initState() {
+    super.initState();
+    _loadTransaksi();
+  }
+
+  bool isLoading = true;
+
+  void _loadTransaksi() async {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid != null) {
+      setState(() {
+        isLoading = true;
+      });
+      final data = await DatabaseService().getPenjualan(uid);
+      setState(() {
+        transaksiList = data;
+        isLoading = false;
+      });
+    }
+  }
+
+  void _tambahTransaksi(Map<String, dynamic> data) async {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid != null) {
+      await DatabaseService().tambahPenjualan(uid, data);
+      _loadTransaksi();
+    }
   }
 
   void _bukaFormTambah() async {
@@ -27,15 +53,25 @@ class _PenjualanPageState extends State<PenjualanPage> {
     );
 
     if (result != null && result is Map<String, dynamic>) {
-      _tambahTransaksi(result);
+      final uid = FirebaseAuth.instance.currentUser?.uid;
+      if (uid != null) {
+        await DatabaseService().tambahPenjualan(uid, result);
+        _loadTransaksi();
+      }
     }
   }
 
-  void _hapusTransaksi(int index) {
+  void _hapusTransaksi(int index) async {
+  final uid = FirebaseAuth.instance.currentUser?.uid;
+  final docId = transaksiList[index]['docId'];
+
+  if (uid != null && docId != null) {
+    await DatabaseService().hapusPenjualan(uid, docId);
     setState(() {
       transaksiList.removeAt(index);
     });
   }
+}
 
   @override
   Widget build(BuildContext context) {
@@ -44,7 +80,9 @@ class _PenjualanPageState extends State<PenjualanPage> {
         title: const Text('Penjualan'),
         backgroundColor: Colors.blue,
       ),
-      body: transaksiList.isEmpty
+      body: isLoading
+        ? const Center(child: CircularProgressIndicator())
+        : transaksiList.isEmpty
         ? const Center(
             child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -68,7 +106,7 @@ class _PenjualanPageState extends State<PenjualanPage> {
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(12)),
             child: ListTile(
-              title: Text('Transaksi: ${transaksi['id']}'),
+              title: Text('Transaksi: ${transaksi['id'] ?? index + 1}'),
               subtitle: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
