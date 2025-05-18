@@ -1,3 +1,4 @@
+import 'package:apk_pembukuan/Laporan/laporanKeuangan.dart';
 import 'package:apk_pembukuan/Piutang/piutang.dart';
 import 'package:apk_pembukuan/Setting/setting.dart';
 import 'package:apk_pembukuan/penjualan/penjualan.dart';
@@ -37,7 +38,7 @@ class _HomepageState extends State<Homepage> {
           StockPage(),
           PenjualanPage(),
           PiutangPage(),
-          buildPage("Laporan Keuangan"),
+          FinancialReportPage(),
         ]);
       });
     }
