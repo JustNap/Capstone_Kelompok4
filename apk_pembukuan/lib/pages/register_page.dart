@@ -5,23 +5,6 @@ import 'package:apk_pembukuan/services/auth/auth_service.dart';
 import 'package:apk_pembukuan/services/database/database_service.dart';
 import 'package:flutter/material.dart';
 
-/*
-
-REGISTER PAGE
-
-- nama
-- email
-- password
-- confirm password
-
-______________________________________
-
-Jika user berhasil membuat aku -> maka mereka akan ter-redirect ke halaman home page
-
-Jika user sudah memiliki akun, mereka dapat ke halaman login dari sini
-
-*/
-
 class RegisterPage extends StatefulWidget {
   final void Function()? onTap;
   const RegisterPage({super.key, required this.onTap});
@@ -31,74 +14,58 @@ class RegisterPage extends StatefulWidget {
 }
 
 class _RegisterPageState extends State<RegisterPage> {
-  // access auth service
   final _auth = AuthService();
   final _db = DatabaseService();
 
-  // text controllers
   final TextEditingController nameController = TextEditingController();
   final TextEditingController emailController = TextEditingController();
   final TextEditingController pwController = TextEditingController();
   final TextEditingController confirmPwController = TextEditingController();
 
-  // register button tapped
   void register() async {
-    // password match -> create user
     if (pwController.text == confirmPwController.text) {
-      // show loading circle
       showLoadingCircle(context);
-      // attempt to register new user
       try {
-        //trying to register
         await _auth.registerEmailPassword(
             emailController.text, pwController.text);
-
-        // finished loading
         if (mounted) hideLoadingCircle(context);
-
-        // once registered, create and save user profile in database
         await _db.saveUserInfoInFirebase(
           name: nameController.text,
           email: emailController.text,
         );
-      }
-
-      // catch any errors
-      catch (e) {
-        // finshed loading
+      } catch (e) {
         if (mounted) hideLoadingCircle(context);
 
-        // let user know of the error
         if (mounted) {
-          showDialog(
-            context: context,
-            builder: (context) => AlertDialog(
-              title: Text(e.toString()),
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                e.toString().replaceAll("Exception:", "").trim(),
+                style: const TextStyle(color: Colors.white),
+              ),
+              backgroundColor: Colors.redAccent,
+              behavior: SnackBarBehavior.floating,
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10)),
+              duration: const Duration(seconds: 3),
             ),
           );
         }
       }
-    }
-
-    // password don't match -> show error
-    else {
+    } else {
       showDialog(
         context: context,
-        builder: (context) => AlertDialog(
+        builder: (context) => const AlertDialog(
           title: Text("Passwords don't match!"),
         ),
       );
     }
   }
 
-  // Build UI
   @override
   Widget build(BuildContext context) {
-    // Scaffold
     return Scaffold(
       backgroundColor: Colors.white,
-
-      // Body
       body: SafeArea(
         child: LayoutBuilder(
           builder: (context, constraints) {
@@ -117,61 +84,86 @@ class _RegisterPageState extends State<RegisterPage> {
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        const SizedBox(height: 50),
-                        Icon(Icons.person, size: 72, color: Colors.blueAccent),
-                        const SizedBox(height: 30),
-                        Text(
-                          "Let's create an account",
+                        const SizedBox(height: 40),
+                        const Icon(Icons.person_add_alt_1,
+                            size: 72, color: Colors.blueAccent),
+                        const SizedBox(height: 20),
+                        const Text(
+                          "Create your account",
                           style: TextStyle(
+                            fontSize: 22,
+                            fontWeight: FontWeight.bold,
                             color: Colors.blueGrey,
-                            fontSize: 16,
                           ),
                         ),
-                        const SizedBox(height: 25),
+                        const SizedBox(height: 10),
+                        Text(
+                          "Join and manage your finances better.",
+                          style:
+                              TextStyle(fontSize: 14, color: Colors.grey[600]),
+                        ),
+                        const SizedBox(height: 30),
+
+                        // Name
                         MyTextField(
                           controller: nameController,
-                          hintText: "Enter Name",
+                          hintText: "Full Name",
                           obscureText: false,
                         ),
                         const SizedBox(height: 10),
+
+                        // Email
                         MyTextField(
                           controller: emailController,
-                          hintText: "Enter Email",
+                          hintText: "Email",
                           obscureText: false,
                         ),
                         const SizedBox(height: 10),
+
+                        // Password
                         MyTextField(
                           controller: pwController,
-                          hintText: "Enter Password",
+                          hintText: "Password",
                           obscureText: true,
                         ),
                         const SizedBox(height: 10),
+
+                        // Confirm Password
                         MyTextField(
                           controller: confirmPwController,
                           hintText: "Confirm Password",
                           obscureText: true,
                         ),
                         const SizedBox(height: 25),
-                        MyButton(text: "Register", onTap: register),
+
+                        // Register Button
+                        MyButton(
+                          text: "Register",
+                          onTap: register,
+                          color: Colors.blueAccent.withOpacity(0.1),
+                        ),
                         const SizedBox(height: 30),
+
+                        // Already a member
                         Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            Text("Already a member?",
+                            const Text("Already a member?",
                                 style: TextStyle(color: Colors.blueGrey)),
                             const SizedBox(width: 5),
                             GestureDetector(
                               onTap: widget.onTap,
-                              child: Text(
+                              child: const Text(
                                 "Login",
                                 style: TextStyle(
-                                  color: Colors.blueGrey,
+                                  color: Colors.blueAccent,
                                   fontWeight: FontWeight.bold,
                                 ),
                               ),
                             ),
                           ],
                         ),
+                        const SizedBox(height: 20),
                       ],
                     ),
                   ),

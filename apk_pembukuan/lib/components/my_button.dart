@@ -9,10 +9,11 @@ Button
 class MyButton extends StatelessWidget {
   final String text;
   final void Function()? onTap;
+  final Color? color;
 
-  const MyButton({super.key, required this.text, required this.onTap});
+  const MyButton(
+      {super.key, required this.text, required this.onTap, this.color});
 
-  // Build UI
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
@@ -20,13 +21,13 @@ class MyButton extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.all(25),
         decoration: BoxDecoration(
-          color: Colors.grey.shade100,
+          color: color ?? Colors.grey.shade100,
           borderRadius: BorderRadius.circular(12),
         ),
         child: Center(
           child: Text(
             text,
-            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
           ),
         ),
       ),
