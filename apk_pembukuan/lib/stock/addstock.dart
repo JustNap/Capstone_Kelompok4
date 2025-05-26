@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:apk_pembukuan/services/database/database_service.dart';
 
 class StockItem {
   String id;
@@ -38,6 +39,8 @@ class _TambahStockPageState extends State<TambahStockPage> {
   final kodeController = TextEditingController();
   final satuanController = TextEditingController();
   final jumlahController = TextEditingController();
+
+  final dbService = DatabaseService();
 
   @override
   void initState() {
@@ -91,7 +94,7 @@ class _TambahStockPageState extends State<TambahStockPage> {
             const SizedBox(height: 20),
             ElevatedButton(
               style: ElevatedButton.styleFrom(backgroundColor: Colors.blue),
-              onPressed: () {
+              onPressed: () async {
                 final jumlah = int.tryParse(jumlahController.text) ?? 0;
                 final hargaSatuan = double.tryParse(satuanController.text) ?? 0;
                 final totalHarga = jumlah * hargaSatuan;
@@ -108,7 +111,10 @@ class _TambahStockPageState extends State<TambahStockPage> {
                   harga: hargaSatuan,
                   totalHarga: totalHarga,
                 );
-                Navigator.pop(context, item);
+
+                await dbService.saveStockItem(item);
+
+                Navigator.pop(context);
               },
               child: const Text('Tambah Stok'),
             ),
