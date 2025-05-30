@@ -3,8 +3,12 @@ import 'package:apk_pembukuan/services/database/database_service.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:pdf/pdf.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:pdf/widgets.dart' as pw;
+import 'package:printing/printing.dart';
+import 'dart:math';
 
 class AnalisisPage extends StatefulWidget {
   const AnalisisPage({super.key});
@@ -24,10 +28,11 @@ class _AnalisisPageState extends State<AnalisisPage> {
   int piutangBelumLunas = 0;
   bool isLoading = true;
 
-  Map<String, int> monthlySales = {};
+  Map<DateTime, int> monthlySales = {};
+  String selectedYear = DateTime.now().year.toString();
+  String selectedChart = 'Line';
+
   List<String> availableYears = [];
-  String selectedYear = '';
-  String chartType = 'Line';
 
   @override
   void initState() {
@@ -40,26 +45,20 @@ class _AnalisisPageState extends State<AnalisisPage> {
     final penjualan = await _db.getPenjualan(_auth.getCurrentUid());
     final piutang = await _db.getDaftarPiutang();
 
-    Map<String, int> salesPerMonth = {};
-    Set<String> years = {};
+    Map<DateTime, int> salesPerMonth = {};
+    Set<String> yearsSet = {};
 
     for (var item in penjualan) {
       final date = (item['tanggal'] as Timestamp?)?.toDate();
       if (date != null) {
-        final year = date.year.toString();
-        years.add(year);
-        if (selectedYear == '' || selectedYear == year) {
-          final month = DateFormat('MMM yyyy').format(date);
-          salesPerMonth[month] = (salesPerMonth[month] ?? 0) +
+        yearsSet.add(date.year.toString());
+        if (date.year.toString() == selectedYear) {
+          final monthKey = DateTime.utc(date.year, date.month);
+          salesPerMonth[monthKey] = (salesPerMonth[monthKey] ?? 0) +
               ((item['total'] ?? 0) as num).toInt();
         }
       }
     }
-
-    final sortedYears = years.toList()..sort();
-    selectedYear = selectedYear == '' && sortedYears.isNotEmpty
-        ? sortedYears.last
-        : selectedYear;
 
     setState(() {
       totalStockValue =
@@ -71,7 +70,7 @@ class _AnalisisPageState extends State<AnalisisPage> {
       piutangNominal = piutang.fold(
           0, (sum, item) => sum + ((item['sisa'] ?? 0) as num).toInt());
       monthlySales = salesPerMonth;
-      availableYears = sortedYears;
+      availableYears = yearsSet.toList()..sort();
       isLoading = false;
     });
   }
@@ -89,14 +88,75 @@ class _AnalisisPageState extends State<AnalisisPage> {
     Share.share(buffer.toString(), subject: "Laporan Keuangan");
   }
 
+  Future<void> _saveChartAsPDF() async {
+    final pdf = pw.Document();
+
+    pdf.addPage(
+      pw.Page(
+        build: (pw.Context context) {
+          return pw.Column(
+            crossAxisAlignment: pw.CrossAxisAlignment.start,
+            children: [
+              pw.Text("Laporan Penjualan Bulanan",
+                  style: pw.TextStyle(
+                      fontSize: 18, fontWeight: pw.FontWeight.bold)),
+              pw.SizedBox(height: 10),
+              pw.Table.fromTextArray(
+                headers: ['Bulan', 'Total Penjualan'],
+                data: monthlySales.entries
+                    .map((e) =>
+                        [DateFormat('MMM yyyy').format(e.key), 'Rp ${e.value}'])
+                    .toList(),
+                border: null,
+              ),
+            ],
+          );
+        },
+      ),
+    );
+
+    await Printing.layoutPdf(
+        onLayout: (PdfPageFormat format) async => pdf.save());
+  }
+
+  String formatRibuan(double value) {
+    if (value >= 1000) {
+      return '${(value / 1000).toStringAsFixed(value % 1000 == 0 ? 0 : 1)}k';
+    } else {
+      return value.toInt().toString();
+    }
+  }
+
+  SideTitles customLeftTitles(List<int> values) {
+    double maxY = values.isNotEmpty ? values.reduce(max).toDouble() : 0;
+    double interval = (maxY / 5).ceilToDouble();
+    if (interval < 1000) interval = 1000;
+
+    return SideTitles(
+      showTitles: true,
+      reservedSize: 40,
+      interval: interval,
+      getTitlesWidget: (value, meta) {
+        return Text(formatRibuan(value), style: const TextStyle(fontSize: 12));
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    final sortedKeys = monthlySales.keys.toList()
+      ..sort((a, b) => a.compareTo(b));
+    final values = sortedKeys.map((e) => monthlySales[e] ?? 0).toList();
+
     return Scaffold(
       appBar: AppBar(
         title: const Text("Analisis Keuangan"),
         actions: [
           IconButton(
-              onPressed: _exportData, icon: const Icon(Icons.share_outlined))
+              onPressed: _exportData, icon: const Icon(Icons.share_outlined)),
+          IconButton(
+              onPressed: _saveChartAsPDF,
+              icon: const Icon(Icons.picture_as_pdf))
         ],
       ),
       body: isLoading
@@ -104,6 +164,7 @@ class _AnalisisPageState extends State<AnalisisPage> {
           : ListView(
               padding: const EdgeInsets.all(16),
               children: [
+                const SizedBox(height: 12),
                 _buildSummaryCard(
                     title: "Total Nilai Stok",
                     amount: totalStockValue,
@@ -117,46 +178,134 @@ class _AnalisisPageState extends State<AnalisisPage> {
                     color: Colors.green),
                 const SizedBox(height: 20),
                 Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
-                    const Text("Tren Penjualan Bulanan",
+                    const Expanded(
+                      child: Text(
+                        "Tren Penjualan Bulanan",
                         style: TextStyle(
-                            fontSize: 16, fontWeight: FontWeight.bold)),
-                    Row(
-                      children: [
-                        DropdownButton<String>(
-                          value: selectedYear,
-                          items: availableYears
-                              .map((year) => DropdownMenuItem(
-                                  value: year, child: Text(year)))
-                              .toList(),
-                          onChanged: (value) {
-                            setState(() {
-                              selectedYear = value!;
-                              isLoading = true;
-                            });
-                            _loadData();
-                          },
-                        ),
-                        const SizedBox(width: 10),
-                        DropdownButton<String>(
-                          value: chartType,
-                          items: ['Line', 'Bar']
-                              .map((type) => DropdownMenuItem(
-                                  value: type, child: Text(type)))
-                              .toList(),
-                          onChanged: (value) {
-                            setState(() {
-                              chartType = value!;
-                            });
-                          },
-                        )
-                      ],
+                            fontSize: 16, fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                    DropdownButton<String>(
+                      value: selectedYear,
+                      onChanged: (value) {
+                        setState(() {
+                          selectedYear = value!;
+                          isLoading = true;
+                        });
+                        _loadData();
+                      },
+                      items: availableYears
+                          .map(
+                              (e) => DropdownMenuItem(value: e, child: Text(e)))
+                          .toList(),
+                    ),
+                    DropdownButton<String>(
+                      value: selectedChart,
+                      onChanged: (value) {
+                        setState(() {
+                          selectedChart = value!;
+                        });
+                      },
+                      items: ['Line', 'Bar']
+                          .map(
+                              (e) => DropdownMenuItem(value: e, child: Text(e)))
+                          .toList(),
                     ),
                   ],
                 ),
-                const SizedBox(height: 12),
-                _buildSalesChart(),
+                const SizedBox(height: 8),
+                AspectRatio(
+                  aspectRatio: 1.2,
+                  child: SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: SizedBox(
+                      width:
+                          (monthlySales.length * 80).toDouble().clamp(300, 600),
+                      child: selectedChart == 'Line'
+                          ? LineChart(LineChartData(
+                              titlesData: FlTitlesData(
+                                leftTitles: AxisTitles(
+                                    sideTitles: customLeftTitles(values)),
+                                bottomTitles: AxisTitles(
+                                  sideTitles: SideTitles(
+                                    showTitles: true,
+                                    getTitlesWidget: (value, meta) {
+                                      final index = value.toInt();
+                                      if (index >= sortedKeys.length)
+                                        return const Text("");
+                                      return Padding(
+                                        padding:
+                                            const EdgeInsets.only(top: 8.0),
+                                        child: Text(
+                                          DateFormat('MMM')
+                                              .format(sortedKeys[index]),
+                                          style: const TextStyle(fontSize: 10),
+                                        ),
+                                      );
+                                    },
+                                  ),
+                                ),
+                                topTitles: AxisTitles(
+                                    sideTitles: SideTitles(showTitles: false)),
+                                rightTitles: AxisTitles(
+                                    sideTitles: SideTitles(showTitles: false)),
+                              ),
+                              lineBarsData: [
+                                LineChartBarData(
+                                  spots: List.generate(
+                                    values.length,
+                                    (i) => FlSpot(
+                                        i.toDouble(), values[i].toDouble()),
+                                  ),
+                                  isCurved: true,
+                                  dotData: FlDotData(show: true),
+                                  color: Colors.blue,
+                                  barWidth: 3,
+                                ),
+                              ],
+                              borderData: FlBorderData(show: false),
+                            ))
+                          : BarChart(BarChartData(
+                              barGroups: List.generate(
+                                values.length,
+                                (i) => BarChartGroupData(x: i, barRods: [
+                                  BarChartRodData(
+                                    toY: values[i].toDouble(),
+                                    color: Colors.blue,
+                                    width: 16,
+                                  ),
+                                ]),
+                              ),
+                              titlesData: FlTitlesData(
+                                leftTitles: AxisTitles(
+                                    sideTitles: customLeftTitles(values)),
+                                bottomTitles: AxisTitles(
+                                  sideTitles: SideTitles(
+                                    showTitles: true,
+                                    getTitlesWidget: (value, meta) {
+                                      final index = value.toInt();
+                                      if (index >= sortedKeys.length)
+                                        return const Text("");
+                                      return Text(
+                                        DateFormat('MMM')
+                                            .format(sortedKeys[index]),
+                                        style: const TextStyle(fontSize: 10),
+                                      );
+                                    },
+                                  ),
+                                ),
+                                topTitles: AxisTitles(
+                                    sideTitles: SideTitles(showTitles: false)),
+                                rightTitles: AxisTitles(
+                                    sideTitles: SideTitles(showTitles: false)),
+                              ),
+                              borderData: FlBorderData(show: false),
+                            )),
+                    ),
+                  ),
+                ),
                 const SizedBox(height: 20),
                 const Text("Komposisi Piutang",
                     style:
@@ -196,108 +345,6 @@ class _AnalisisPageState extends State<AnalisisPage> {
                 )
               ],
             ),
-    );
-  }
-
-  Widget _buildSalesChart() {
-    final sortedKeys = monthlySales.keys.toList()
-      ..sort((a, b) => DateFormat('MMM yyyy')
-          .parse(a)
-          .compareTo(DateFormat('MMM yyyy').parse(b)));
-
-    final spots = List.generate(
-      sortedKeys.length,
-      (i) => FlSpot(i.toDouble(), monthlySales[sortedKeys[i]]!.toDouble()),
-    );
-
-    final barGroups = List.generate(
-      sortedKeys.length,
-      (i) => BarChartGroupData(
-        x: i,
-        barRods: [
-          BarChartRodData(
-            toY: monthlySales[sortedKeys[i]]!.toDouble(),
-            color: Colors.blue,
-            width: 14,
-          )
-        ],
-      ),
-    );
-
-    return SizedBox(
-      height: 250,
-      child: SingleChildScrollView(
-        scrollDirection: Axis.horizontal,
-        child: SizedBox(
-          width: sortedKeys.length * 70,
-          child: chartType == 'Line'
-              ? LineChart(
-                  LineChartData(
-                    titlesData: _buildChartTitles(sortedKeys),
-                    lineBarsData: [
-                      LineChartBarData(
-                        spots: spots,
-                        isCurved: true,
-                        dotData: FlDotData(show: true),
-                        color: Colors.blue,
-                        barWidth: 3,
-                      ),
-                    ],
-                    borderData: FlBorderData(show: false),
-                    gridData: FlGridData(show: true),
-                  ),
-                )
-              : BarChart(
-                  BarChartData(
-                    titlesData: _buildChartTitles(sortedKeys),
-                    barGroups: barGroups,
-                    borderData: FlBorderData(show: false),
-                    gridData: FlGridData(show: true),
-                  ),
-                ),
-        ),
-      ),
-    );
-  }
-
-  FlTitlesData _buildChartTitles(List<String> sortedKeys) {
-    return FlTitlesData(
-      bottomTitles: AxisTitles(
-        sideTitles: SideTitles(
-          showTitles: true,
-          interval: 1,
-          getTitlesWidget: (value, meta) {
-            final index = value.toInt();
-            if (index >= sortedKeys.length) return const Text("");
-            return Padding(
-              padding: const EdgeInsets.only(top: 8.0),
-              child: Text(
-                sortedKeys[index],
-                style: const TextStyle(fontSize: 10),
-              ),
-            );
-          },
-        ),
-      ),
-      leftTitles: AxisTitles(
-        sideTitles: SideTitles(
-          showTitles: true,
-          reservedSize: 40,
-          getTitlesWidget: (value, meta) {
-            String formatted;
-            if (value >= 1000000) {
-              formatted = '${(value / 1000000).toStringAsFixed(1)}M';
-            } else if (value >= 1000) {
-              formatted = '${(value / 1000).toStringAsFixed(0)}K';
-            } else {
-              formatted = value.toStringAsFixed(0);
-            }
-            return Text(formatted, style: const TextStyle(fontSize: 10));
-          },
-        ),
-      ),
-      topTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
-      rightTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
     );
   }
 
