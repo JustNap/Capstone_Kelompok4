@@ -1,37 +1,67 @@
 import 'package:flutter/material.dart';
- 
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class FinancialReportPage extends StatefulWidget {
   const FinancialReportPage({super.key});
- 
+
   @override
   State<FinancialReportPage> createState() => _FinancialReportPageState();
 }
- 
+
 class _FinancialReportPageState extends State<FinancialReportPage>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
   String _selectedPeriod = 'Mei 2025';
+
   final List<String> _availablePeriods = [
-    'Mei 2025',
-    'April 2025',
-    'Maret 2025',
-    'Februari 2025',
-    'Januari 2025',
+    'Januari 2025', 'Februari 2025', 'Maret 2025',
+    'April 2025', 'Mei 2025', 'Juni 2025',
+    'Juli 2025', 'Agustus 2025', 'September 2025',
+    'Oktober 2025', 'November 2025', 'Desember 2025',
   ];
- 
+
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
   }
- 
+
   @override
   void dispose() {
     _tabController.dispose();
     super.dispose();
   }
- 
+
+  Future<List<Map<String, dynamic>>> _getMutasiKas(String bulanTahun) async {
+    final uid = FirebaseAuth.instance.currentUser!.uid;
+    final snapshot = await FirebaseFirestore.instance
+        .collection("Users")
+        .doc(uid)
+        .collection("MutasiKas")
+        .orderBy("tanggal", descending: true)
+        .get();
+
+    return snapshot.docs.map((doc) {
+      final data = doc.data();
+      data['id'] = doc.id;
+      return data;
+    }).where((data) {
+      final tanggal = (data['tanggal'] as Timestamp).toDate();
+      final bulan = _monthName(tanggal.month);
+      final tahun = tanggal.year.toString();
+      return "$bulan $tahun" == bulanTahun;
+    }).toList();
+  }
+
+  String _monthName(int month) {
+    const months = [
+      "", "Januari", "Februari", "Maret", "April", "Mei",
+      "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"
+    ];
+    return months[month];
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -71,47 +101,63 @@ class _FinancialReportPageState extends State<FinancialReportPage>
             ),
           ),
           Expanded(
-            child: TabBarView(
-              controller: _tabController,
-              children: [
-                _buildSummaryTab(),
-                _buildDetailTab(),
-              ],
+            child: FutureBuilder<List<Map<String, dynamic>>>(
+              future: _getMutasiKas(_selectedPeriod),
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+
+                final data = snapshot.data ?? [];
+
+                return TabBarView(
+                  controller: _tabController,
+                  children: [
+                    _buildSummaryTab(data),
+                    _buildDetailTab(data),
+                  ],
+                );
+              },
             ),
           ),
         ],
       ),
     );
   }
- 
-  Widget _buildSummaryTab() {
+
+  Widget _buildSummaryTab(List<Map<String, dynamic>> data) {
+    final pemasukan = data
+        .where((item) => item['jenis'] == 'masuk')
+        .fold(0.0, (sum, item) => sum + (item['jumlah'] as num).toDouble());
+    final pengeluaran = data
+        .where((item) => item['jenis'] == 'keluar')
+        .fold(0.0, (sum, item) => sum + (item['jumlah'] as num).toDouble());
+    final labaKotor = pemasukan - pengeluaran;
+    final pajak = labaKotor * 0.10;
+    final labaBersih = labaKotor - pajak;
+
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
-      child: Column(
-        children: [
-          Card(
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                children: [
-                  _buildSummaryRow('Total Pendapatan', 'Rp 75.000.000'),
-                  _buildSummaryRow('Total Pengeluaran', 'Rp 45.000.000'),
-                  const Divider(),
-                  _buildSummaryRow('Laba Kotor', 'Rp 30.000.000', color: Colors.green),
-                  _buildSummaryRow('Pajak', 'Rp 3.000.000'),
-                  const Divider(),
-                  _buildSummaryRow('Laba Bersih', 'Rp 27.000.000',
-                      color: Colors.blue, isBold: true),
-                ],
-              ),
-            ),
+      child: Card(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            children: [
+              _buildSummaryRow('Total Pendapatan', 'Rp ${pemasukan.toStringAsFixed(0)}'),
+              _buildSummaryRow('Total Pengeluaran', 'Rp ${pengeluaran.toStringAsFixed(0)}'),
+              const Divider(),
+              _buildSummaryRow('Laba Kotor', 'Rp ${labaKotor.toStringAsFixed(0)}', color: Colors.green),
+              _buildSummaryRow('Pajak (10%)', 'Rp ${pajak.toStringAsFixed(0)}'),
+              const Divider(),
+              _buildSummaryRow('Laba Bersih', 'Rp ${labaBersih.toStringAsFixed(0)}', color: Colors.blue, isBold: true),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }
- 
+
   Widget _buildSummaryRow(String title, String value,
       {Color? color, bool isBold = false}) {
     return Padding(
@@ -120,7 +166,9 @@ class _FinancialReportPageState extends State<FinancialReportPage>
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Text(title,
-              style: TextStyle(fontSize: 16, fontWeight: isBold ? FontWeight.bold : FontWeight.normal)),
+              style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: isBold ? FontWeight.bold : FontWeight.normal)),
           Text(value,
               style: TextStyle(
                 fontSize: 16,
@@ -131,8 +179,11 @@ class _FinancialReportPageState extends State<FinancialReportPage>
       ),
     );
   }
- 
-  Widget _buildDetailTab() {
+
+  Widget _buildDetailTab(List<Map<String, dynamic>> data) {
+    final pemasukan = data.where((item) => item['jenis'] == 'masuk').toList();
+    final pengeluaran = data.where((item) => item['jenis'] == 'keluar').toList();
+
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
       child: Column(
@@ -140,35 +191,27 @@ class _FinancialReportPageState extends State<FinancialReportPage>
           _buildTransactionSection(
             title: 'Pendapatan',
             isIncome: true,
-            transactions: const [
-              {'tanggal': '10 Mei 2025', 'deskripsi': 'Penjualan A', 'jumlah': 'Rp 15.000.000'},
-              {'tanggal': '08 Mei 2025', 'deskripsi': 'Jasa Konsultasi', 'jumlah': 'Rp 25.000.000'},
-              {'tanggal': '05 Mei 2025', 'deskripsi': 'Pembayaran Piutang', 'jumlah': 'Rp 35.000.000'},
-            ],
-            total: 'Rp 75.000.000',
+            transactions: pemasukan,
           ),
           const SizedBox(height: 24),
           _buildTransactionSection(
             title: 'Pengeluaran',
             isIncome: false,
-            transactions: const [
-              {'tanggal': '09 Mei 2025', 'deskripsi': 'Operasional', 'jumlah': 'Rp 10.000.000'},
-              {'tanggal': '07 Mei 2025', 'deskripsi': 'Gaji Karyawan', 'jumlah': 'Rp 25.000.000'},
-              {'tanggal': '03 Mei 2025', 'deskripsi': 'Peralatan', 'jumlah': 'Rp 10.000.000'},
-            ],
-            total: 'Rp 45.000.000',
+            transactions: pengeluaran,
           ),
         ],
       ),
     );
   }
- 
+
   Widget _buildTransactionSection({
     required String title,
     required bool isIncome,
-    required List<Map<String, String>> transactions,
-    required String total,
+    required List<Map<String, dynamic>> transactions,
   }) {
+    double total = transactions.fold(0.0,
+        (sum, item) => sum + (item['jumlah'] as num).toDouble());
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -178,7 +221,7 @@ class _FinancialReportPageState extends State<FinancialReportPage>
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           child: Column(
             children: [
-              for (var tx in transactions)
+              for (var i = 0; i < transactions.length; i++)
                 Column(
                   children: [
                     ListTile(
@@ -186,17 +229,23 @@ class _FinancialReportPageState extends State<FinancialReportPage>
                         isIncome ? Icons.arrow_upward : Icons.arrow_downward,
                         color: isIncome ? Colors.green : Colors.red,
                       ),
-                      title: Text(tx['deskripsi']!),
-                      subtitle: Text(tx['tanggal']!),
+                      title: Text(transactions[i]['deskripsi']),
+                      subtitle: Text(
+                        (transactions[i]['tanggal'] as Timestamp)
+                            .toDate()
+                            .toLocal()
+                            .toString()
+                            .split(' ')[0],
+                      ),
                       trailing: Text(
-                        tx['jumlah']!,
+                        'Rp ${transactions[i]['jumlah'].toStringAsFixed(0)}',
                         style: TextStyle(
                           fontWeight: FontWeight.bold,
                           color: isIncome ? Colors.green : Colors.red,
                         ),
                       ),
                     ),
-                    if (tx != transactions.last) const Divider(height: 1),
+                    if (i != transactions.length - 1) const Divider(height: 1),
                   ],
                 ),
               Container(
@@ -210,7 +259,7 @@ class _FinancialReportPageState extends State<FinancialReportPage>
                   ),
                 ),
                 child: Text(
-                  'Total: $total',
+                  'Total: Rp ${total.toStringAsFixed(0)}',
                   textAlign: TextAlign.end,
                   style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                 ),

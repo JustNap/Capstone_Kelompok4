@@ -41,7 +41,6 @@ class DatabaseService {
     }
   }
 
-
   /*
     BARANG/JASA
   */
@@ -64,6 +63,12 @@ class DatabaseService {
       'harga': item.harga,
       'totalHarga': item.totalHarga,
     });
+
+    await catatMutasi(
+      deskripsi: "Pembelian Stok: ${item.nama}",
+      jumlah: item.totalHarga,
+      jenis: 'keluar',
+    );
   }
 
   Future<void> deleteStockItem(String id) async {
@@ -101,36 +106,44 @@ class DatabaseService {
     });
   }
 
-
-
   Future<void> tambahPiutang(Map<String, dynamic> data) async {
     final uid = _auth.currentUser!.uid;
     await _db.collection("Users").doc(uid).collection("Piutang").add(data);
+
+    await catatMutasi(
+      deskripsi: "Piutang baru: ${data['namaPelanggan'] ?? 'Tidak diketahui' }",
+      jumlah: (data['jumlah'] ?? 0).toDouble(),
+      jenis: 'keluar',
+    );
   }
 
   Future<List<Map<String, dynamic>>> getDaftarPiutang() async {
     final uid = _auth.currentUser!.uid;
-    final snapshot = await _db
-        .collection("Users")
-        .doc(uid)
-        .collection("Piutang")
-        .get();
+    final snapshot =
+        await _db.collection("Users").doc(uid).collection("Piutang").get();
     return snapshot.docs.map((doc) {
       final data = doc.data();
       data['id'] = doc.id;
       return data;
     }).toList();
-  }                          
+  }
 
   Future<void> tambahPenjualan(String uid, Map<String, dynamic> data) async {
     await _db.collection('Users').doc(uid).collection('penjualan').add({
       ...data,
       'tanggal': DateTime.now(),
     });
+
+    await catatMutasi(
+      deskripsi: "Penjualan: ${data['deskripsi'] ?? 'Barang'}",
+      jumlah: (data['total'] ?? 0).toDouble(),
+      jenis: 'masuk',
+    );
   }
 
   Future<List<Map<String, dynamic>>> getPenjualan(String uid) async {
-    final snapshot = await _db.collection('Users').doc(uid).collection('penjualan').get();
+    final snapshot =
+        await _db.collection('Users').doc(uid).collection('penjualan').get();
     return snapshot.docs.map((doc) {
       final data = doc.data();
       data['docId'] = doc.id;
@@ -138,15 +151,46 @@ class DatabaseService {
     }).toList();
   }
 
-
-  Future<void> updatePiutang(String id, Map<String, dynamic> updatedData) async {
+  Future<void> updatePiutang(String id,Map<String, dynamic> updatedData, {
+    required String namaPelanggan, required double jumlahBayar,
+  }) async {
     final uid = _auth.currentUser!.uid;
+
+    final doc = await _db
+        .collection("Users")
+        .doc(uid)
+        .collection("Piutang")
+        .doc(id)
+        .get();
+
+    final oldData = doc.data();
+    final oldSisa = (oldData?['sisa'] ?? 0).toDouble();
+    final newSisa = (updatedData['sisa'] ?? oldSisa).toDouble();
+
+    final pelunasan = oldSisa - newSisa;
+    print("Pelunasan: $pelunasan");
+
     await _db
         .collection("Users")
         .doc(uid)
         .collection("Piutang")
         .doc(id)
         .update(updatedData);
+
+    if (pelunasan > 0) {
+      try {
+        await catatMutasi(
+          deskripsi: "Pembayaran Piutang: $namaPelanggan",
+          jumlah: pelunasan,
+          jenis: 'masuk',
+        );
+        print("catatMutasi berhasil dicatat.");
+      } catch (e) {
+        print("Gagal mencatat mutasi: $e");
+      }
+    } else {
+      print("Tidak ada pelunasan, mutasi tidak dicatat.");
+    }
   }
 
   Future<void> hapusPiutang(String id) async {
@@ -160,7 +204,61 @@ class DatabaseService {
   }
 
   Future<void> hapusPenjualan(String uid, String docId) async {
-    await _db.collection('Users').doc(uid).collection('penjualan').doc(docId).delete();
+    await _db
+        .collection('Users')
+        .doc(uid)
+        .collection('penjualan')
+        .doc(docId)
+        .delete();
   }
 
-}  
+  // Mendapatkan UID user yang sedang login
+  String get uid => _auth.currentUser!.uid;
+
+  // Referensi ke koleksi MutasiKas user
+  CollectionReference get mutasiKasRef => FirebaseFirestore.instance
+      .collection('Users')
+      .doc(uid)
+      .collection('MutasiKas');
+
+  /// Fungsi mencatat transaksi ke MutasiKas
+  Future<void> catatMutasi({
+    required String deskripsi,
+    required double jumlah,
+    required String jenis, // 'masuk' atau 'keluar'
+    DateTime? tanggal,
+  }) async {
+    try {
+      await mutasiKasRef.add({
+        'deskripsi': deskripsi,
+        'jumlah': jumlah,
+        'jenis': jenis, // hanya "masuk" atau "keluar"
+        'tanggal': tanggal ?? DateTime.now(),
+      });
+    } catch (e) {
+      print('Gagal mencatat mutasi: $e');
+      rethrow;
+    }
+  }
+
+  /// Ambil seluruh data MutasiKas (opsional)
+  Future<List<Map<String, dynamic>>> getAllMutasi() async {
+    final snapshot =
+        await mutasiKasRef.orderBy("tanggal", descending: true).get();
+    return snapshot.docs.map((doc) {
+      final data = doc.data() as Map<String, dynamic>;
+      data['id'] = doc.id;
+      return data;
+    }).toList();
+  }
+
+  /// Hapus mutasi (opsional)
+  Future<void> deleteMutasi(String docId) async {
+    await mutasiKasRef.doc(docId).delete();
+  }
+
+  /// Update mutasi (opsional)
+  Future<void> updateMutasi(String docId, Map<String, dynamic> newData) async {
+    await mutasiKasRef.doc(docId).update(newData);
+  }
+}
