@@ -8,6 +8,7 @@ import 'package:apk_pembukuan/models/user.dart';
 import 'package:apk_pembukuan/services/database/database_service.dart';
 import 'package:apk_pembukuan/services/auth/auth_service.dart';
 import 'package:apk_pembukuan/pages/login_page.dart';
+import 'package:apk_pembukuan/analisis/analisis_page.dart';
 
 class Homepage extends StatefulWidget {
   const Homepage({super.key});
@@ -34,7 +35,7 @@ class _HomepageState extends State<Homepage> {
       setState(() {
         user = fetchedUser;
         _pages.addAll([
-          buildPage("Analisis Keuangan"),
+          AnalisisPage(),
           StockPage(),
           PenjualanPage(),
           PiutangPage(),

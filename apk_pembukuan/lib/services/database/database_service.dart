@@ -41,7 +41,6 @@ class DatabaseService {
     }
   }
 
-
   /*
     BARANG/JASA
   */
@@ -101,8 +100,6 @@ class DatabaseService {
     });
   }
 
-
-
   Future<void> tambahPiutang(Map<String, dynamic> data) async {
     final uid = _auth.currentUser!.uid;
     await _db.collection("Users").doc(uid).collection("Piutang").add(data);
@@ -110,17 +107,14 @@ class DatabaseService {
 
   Future<List<Map<String, dynamic>>> getDaftarPiutang() async {
     final uid = _auth.currentUser!.uid;
-    final snapshot = await _db
-        .collection("Users")
-        .doc(uid)
-        .collection("Piutang")
-        .get();
+    final snapshot =
+        await _db.collection("Users").doc(uid).collection("Piutang").get();
     return snapshot.docs.map((doc) {
       final data = doc.data();
       data['id'] = doc.id;
       return data;
     }).toList();
-  }                          
+  }
 
   Future<void> tambahPenjualan(String uid, Map<String, dynamic> data) async {
     await _db.collection('Users').doc(uid).collection('penjualan').add({
@@ -130,7 +124,8 @@ class DatabaseService {
   }
 
   Future<List<Map<String, dynamic>>> getPenjualan(String uid) async {
-    final snapshot = await _db.collection('Users').doc(uid).collection('penjualan').get();
+    final snapshot =
+        await _db.collection('Users').doc(uid).collection('penjualan').get();
     return snapshot.docs.map((doc) {
       final data = doc.data();
       data['docId'] = doc.id;
@@ -138,8 +133,8 @@ class DatabaseService {
     }).toList();
   }
 
-
-  Future<void> updatePiutang(String id, Map<String, dynamic> updatedData) async {
+  Future<void> updatePiutang(
+      String id, Map<String, dynamic> updatedData) async {
     final uid = _auth.currentUser!.uid;
     await _db
         .collection("Users")
@@ -160,7 +155,32 @@ class DatabaseService {
   }
 
   Future<void> hapusPenjualan(String uid, String docId) async {
-    await _db.collection('Users').doc(uid).collection('penjualan').doc(docId).delete();
+    await _db
+        .collection('Users')
+        .doc(uid)
+        .collection('penjualan')
+        .doc(docId)
+        .delete();
   }
 
-}  
+  Future<List<StockItem>> getStockItemsOnce() async {
+    final uid = _auth.currentUser!.uid;
+    final snapshot =
+        await _db.collection("Users").doc(uid).collection("BarangJasa").get();
+
+    return snapshot.docs.map((doc) {
+      final data = doc.data();
+      return StockItem(
+        id: data['id'],
+        nama: data['nama'],
+        kategori: data['kategori'],
+        jenis: data['jenis'],
+        kode: data['kode'],
+        satuan: data['satuan'],
+        jumlah: data['jumlah'],
+        harga: (data['harga'] as num).toDouble(),
+        totalHarga: (data['totalHarga'] as num).toDouble(),
+      );
+    }).toList();
+  }
+}
