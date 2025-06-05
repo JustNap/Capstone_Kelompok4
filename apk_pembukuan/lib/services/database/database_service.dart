@@ -71,6 +71,31 @@ class DatabaseService {
     );
   }
 
+  Future<void> kurangiStokBarang(String id, int jumlahTerjual) async {
+    final uid = FirebaseAuth.instance.currentUser!.uid;
+    final docRef = FirebaseFirestore.instance
+        .collection('Users')
+        .doc(uid)
+        .collection('BarangJasa')
+        .doc(id);
+
+    await FirebaseFirestore.instance.runTransaction((transaction) async {
+      final snapshot = await transaction.get(docRef);
+
+      if (!snapshot.exists) {
+        throw Exception("Data barang dengan ID $id tidak ditemukan");
+      }
+
+      final currentStock = snapshot['jumlah']; // GANTI 'stock' jadi 'jumlah'
+
+      if (currentStock < jumlahTerjual) {
+        throw Exception("Stok tidak mencukupi");
+      }
+
+      transaction.update(docRef, {'jumlah': currentStock - jumlahTerjual});
+    });
+  }
+
   Future<void> deleteStockItem(String id) async {
     String uid = _auth.currentUser!.uid;
     await _db
@@ -111,7 +136,7 @@ class DatabaseService {
     await _db.collection("Users").doc(uid).collection("Piutang").add(data);
 
     await catatMutasi(
-      deskripsi: "Piutang baru: ${data['namaPelanggan'] ?? 'Tidak diketahui' }",
+      deskripsi: "Piutang baru: ${data['namaPelanggan'] ?? 'Tidak diketahui'}",
       jumlah: (data['jumlah'] ?? 0).toDouble(),
       jenis: 'keluar',
     );
@@ -151,8 +176,11 @@ class DatabaseService {
     }).toList();
   }
 
-  Future<void> updatePiutang(String id,Map<String, dynamic> updatedData, {
-    required String namaPelanggan, required double jumlahBayar,
+  Future<void> updatePiutang(
+    String id,
+    Map<String, dynamic> updatedData, {
+    required String namaPelanggan,
+    required double jumlahBayar,
   }) async {
     final uid = _auth.currentUser!.uid;
 
