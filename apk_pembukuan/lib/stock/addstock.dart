@@ -4,8 +4,6 @@ import 'package:apk_pembukuan/services/database/database_service.dart';
 class StockItem {
   String id;
   String nama;
-  String kategori;
-  String jenis;
   String kode;
   String satuan;
   int jumlah;
@@ -15,8 +13,6 @@ class StockItem {
   StockItem({
     required this.id,
     required this.nama,
-    required this.kategori,
-    required this.jenis,
     required this.kode,
     required this.satuan,
     required this.jumlah,
@@ -103,8 +99,6 @@ class _TambahStockPageState extends State<TambahStockPage> {
                   id: widget.existingItem?.id ??
                       DateTime.now().millisecondsSinceEpoch.toString(),
                   nama: namaController.text,
-                  kategori: '',
-                  jenis: '',
                   kode: kodeController.text,
                   satuan: satuanController.text,
                   jumlah: jumlah,

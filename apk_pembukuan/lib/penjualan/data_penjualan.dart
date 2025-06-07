@@ -1,4 +1,6 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class DataPenjualanPage extends StatefulWidget {
   final int transaksiId;
@@ -10,39 +12,74 @@ class DataPenjualanPage extends StatefulWidget {
 }
 
 class _DataPenjualanPageState extends State<DataPenjualanPage> {
-  final TextEditingController _namaBarangController = TextEditingController();
+  List<Map<String, dynamic>> daftarBarang = [];
+  Map<String, dynamic>? barangTerpilih;
+
   final TextEditingController _jumlahController = TextEditingController();
-  final TextEditingController _hargaController = TextEditingController();
 
   int get totalHarga {
-    final jumlah = int.tryParse(_jumlahController.text) ?? 0;
-    final harga = int.tryParse(_hargaController.text) ?? 0;
-    return jumlah * harga;
+  final jumlah = int.tryParse(_jumlahController.text) ?? 0;
+
+  // Ambil harga dari barangTerpilih dan konversi ke int
+  final hargaNum = barangTerpilih?['harga'] ?? 0;
+
+  // Konversi ke int secara aman
+  final harga = hargaNum is int ? hargaNum : (hargaNum as num).toInt();
+
+  return jumlah * harga;
+}
+
+  @override
+  void initState() {
+    super.initState();
+    _loadBarang();
   }
 
-  void _simpanTransaksi() {
-    String namaBarang = _namaBarangController.text;
-    int jumlah = int.tryParse(_jumlahController.text) ?? 0;
-    int harga = int.tryParse(_hargaController.text) ?? 0;
+  void _loadBarang() async {
+  final uid = FirebaseAuth.instance.currentUser?.uid;
+  if (uid == null) return;
 
-    if (namaBarang.isEmpty || jumlah <= 0 || harga <= 0) {
+  final snapshot = await FirebaseFirestore.instance
+      .collection('Users')
+      .doc(uid)
+      .collection('BarangJasa')
+      .get();
+
+  final data = snapshot.docs
+      .map((doc) => {'id': doc.id, ...doc.data()})
+      .toList();
+
+  setState(() {
+    daftarBarang = data;
+  });
+}
+
+  void _simpanTransaksi() {
+    if (barangTerpilih == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Mohon isi semua data dengan benar')),
+        const SnackBar(content: Text('Pilih barang terlebih dahulu')),
       );
       return;
     }
 
-    print('ID Transaksi: ${widget.transaksiId}');
-    print('Nama Barang: $namaBarang');
-    print('Jumlah: $jumlah');
-    print('Harga: $harga');
-    print('Total: ${totalHarga}');
+    int jumlah = int.tryParse(_jumlahController.text) ?? 0;
+    int stok = barangTerpilih?['jumlah'] ?? 0;
+
+    if (jumlah <= 0 || jumlah > stok) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+            content: Text(
+                'Jumlah tidak valid. Stok tersedia: $stok')),
+      );
+      return;
+    }
 
     Navigator.pop(context, {
       'id': widget.transaksiId,
-      'nama': namaBarang,
+      'nama': barangTerpilih!['nama'],
+      'barangId': barangTerpilih!['id'], // penting untuk update stok
       'jumlah': jumlah,
-      'harga': harga,
+      'harga': barangTerpilih!['harga'],
       'total': totalHarga,
     });
   }
@@ -62,10 +99,22 @@ class _DataPenjualanPageState extends State<DataPenjualanPage> {
             Text('ID Transaksi: ${widget.transaksiId}'),
             const SizedBox(height: 12),
 
-            TextField(
-              controller: _namaBarangController,
+            // Dropdown barang
+            DropdownButtonFormField<Map<String, dynamic>>(
+              items: daftarBarang
+                  .map((barang) => DropdownMenuItem(
+                        value: barang,
+                        child: Text('${barang['nama']} (Stok: ${barang['jumlah']})'),
+                      ))
+                  .toList(),
+              onChanged: (value) {
+                setState(() {
+                  barangTerpilih = value;
+                  _jumlahController.clear();
+                });
+              },
               decoration: const InputDecoration(
-                labelText: 'Nama Barang',
+                labelText: 'Pilih Barang',
                 border: OutlineInputBorder(),
               ),
             ),
@@ -75,22 +124,14 @@ class _DataPenjualanPageState extends State<DataPenjualanPage> {
               controller: _jumlahController,
               keyboardType: TextInputType.number,
               decoration: const InputDecoration(
-                labelText: 'Jumlah Barang',
+                labelText: 'Jumlah Dijual',
                 border: OutlineInputBorder(),
               ),
               onChanged: (_) => setState(() {}),
             ),
             const SizedBox(height: 12),
 
-            TextField(
-              controller: _hargaController,
-              keyboardType: TextInputType.number,
-              decoration: const InputDecoration(
-                labelText: 'Harga Satuan',
-                border: OutlineInputBorder(),
-              ),
-              onChanged: (_) => setState(() {}),
-            ),
+            Text('Harga Satuan: Rp ${barangTerpilih?['harga'] ?? 0}'),
             const SizedBox(height: 12),
 
             Text('Total Harga: Rp $totalHarga'),

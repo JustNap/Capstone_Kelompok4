@@ -56,8 +56,6 @@ class DatabaseService {
         .set({
       'id': item.id,
       'nama': item.nama,
-      'kategori': item.kategori,
-      'jenis': item.jenis,
       'kode': item.kode,
       'satuan': item.satuan,
       'jumlah': item.jumlah,
@@ -89,8 +87,6 @@ class DatabaseService {
         return StockItem(
           id: data['id'],
           nama: data['nama'],
-          kategori: data['kategori'],
-          jenis: data['jenis'],
           kode: data['kode'],
           satuan: data['satuan'],
           jumlah: data['jumlah'],
@@ -123,11 +119,39 @@ class DatabaseService {
   }                          
 
   Future<void> tambahPenjualan(String uid, Map<String, dynamic> data) async {
-    await _db.collection('Users').doc(uid).collection('penjualan').add({
-      ...data,
-      'tanggal': DateTime.now(),
-    });
+  final String itemId = data['barangId'];
+  final int jumlahTerjual = data['jumlah'];
+
+  final DocumentReference itemRef = _db
+      .collection('Users')
+      .doc(uid)
+      .collection('BarangJasa')
+      .doc(itemId);
+
+  // Ambil data stok terkini
+  final DocumentSnapshot itemSnapshot = await itemRef.get();
+
+  if (itemSnapshot.exists) {
+    final currentData = itemSnapshot.data() as Map<String, dynamic>;
+    final int currentStok = currentData['jumlah'] ?? 0;
+
+    // Cek apakah stok cukup
+    if (currentStok >= jumlahTerjual) {
+      // Kurangi stok
+      await itemRef.update({'jumlah': currentStok - jumlahTerjual});
+
+      // Tambah data penjualan
+      await _db.collection('Users').doc(uid).collection('penjualan').add({
+        ...data,
+        'tanggal': DateTime.now(),
+      });
+    } else {
+      throw Exception("Stok tidak cukup untuk melakukan penjualan.");
+    }
+  } else {
+    throw Exception("Barang tidak ditemukan.");
   }
+}
 
   Future<List<Map<String, dynamic>>> getPenjualan(String uid) async {
     final snapshot = await _db.collection('Users').doc(uid).collection('penjualan').get();
@@ -162,5 +186,4 @@ class DatabaseService {
   Future<void> hapusPenjualan(String uid, String docId) async {
     await _db.collection('Users').doc(uid).collection('penjualan').doc(docId).delete();
   }
-
 }  
