@@ -86,13 +86,20 @@ class DatabaseService {
         throw Exception("Data barang dengan ID $id tidak ditemukan");
       }
 
-      final currentStock = snapshot['jumlah']; // GANTI 'stock' jadi 'jumlah'
+      final currentStock = snapshot['jumlah'] as int;
+      final hargaSatuan = (snapshot['harga'] as num).toDouble();
 
       if (currentStock < jumlahTerjual) {
         throw Exception("Stok tidak mencukupi");
       }
 
-      transaction.update(docRef, {'jumlah': currentStock - jumlahTerjual});
+      final updatedJumlah = currentStock - jumlahTerjual;
+      final updatedTotal = updatedJumlah * hargaSatuan;
+
+      transaction.update(docRef, {
+        'jumlah': updatedJumlah,
+        'totalHarga': updatedTotal,
+      });
     });
   }
 
@@ -182,7 +189,6 @@ class DatabaseService {
     required String namaPelanggan,
     required double jumlahBayar,
   }) async {
-      
     final uid = _auth.currentUser!.uid;
 
     final doc = await _db
