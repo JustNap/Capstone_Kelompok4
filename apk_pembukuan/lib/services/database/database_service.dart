@@ -182,6 +182,7 @@ class DatabaseService {
     required String namaPelanggan,
     required double jumlahBayar,
   }) async {
+      
     final uid = _auth.currentUser!.uid;
 
     final doc = await _db
@@ -288,5 +289,26 @@ class DatabaseService {
   /// Update mutasi (opsional)
   Future<void> updateMutasi(String docId, Map<String, dynamic> newData) async {
     await mutasiKasRef.doc(docId).update(newData);
+  }
+
+  Future<List<StockItem>> getStockItemsOnce() async {
+    final uid = _auth.currentUser!.uid;
+    final snapshot =
+        await _db.collection("Users").doc(uid).collection("BarangJasa").get();
+
+    return snapshot.docs.map((doc) {
+      final data = doc.data();
+      return StockItem(
+        id: data['id'],
+        nama: data['nama'],
+        kategori: data['kategori'],
+        jenis: data['jenis'],
+        kode: data['kode'],
+        satuan: data['satuan'],
+        jumlah: data['jumlah'],
+        harga: (data['harga'] as num).toDouble(),
+        totalHarga: (data['totalHarga'] as num).toDouble(),
+      );
+    }).toList();
   }
 }
