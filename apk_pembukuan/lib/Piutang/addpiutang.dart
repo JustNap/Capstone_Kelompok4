@@ -75,7 +75,7 @@ class _TambahPiutangPageState extends State<AddPiutangPage> {
                 }
 
                 widget.onAdd({
-                  'nama': namaController.text,
+                  'namaPelanggan': namaController.text,
                   'deskripsi': deskripsiController.text,
                   'jumlah': int.parse(jumlahController.text),
                   'sisa': int.parse(jumlahController.text),

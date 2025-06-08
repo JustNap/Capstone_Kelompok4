@@ -91,7 +91,7 @@ class _DetailPiutangPageState extends State<DetailPiutangPage> {
       body: SingleChildScrollView(
         padding: EdgeInsets.all(16),
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Text(widget.data['nama'], style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
+          Text(widget.data['namaPelanggan'], style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
           Text(widget.data['deskripsi'], style: TextStyle(fontSize: 16, color: Colors.grey)),
           SizedBox(height: 8),
           Text('Status: $currentStatus', style: TextStyle(color: currentStatus == 'Lunas' ? Colors.green : Colors.red)),
