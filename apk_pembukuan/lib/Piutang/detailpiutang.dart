@@ -78,8 +78,12 @@ class _DetailPiutangPageState extends State<DetailPiutangPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Detail Piutang'),
-        backgroundColor: Colors.blue,
+        title: Text('Detail Piutang',
+          style: TextStyle(
+          color: Colors.black,
+              ),
+        ),
+        backgroundColor: Colors.greenAccent,
         actions: [
           IconButton(
             icon: Icon(Icons.delete),

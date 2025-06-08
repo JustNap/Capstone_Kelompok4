@@ -1,4 +1,7 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:apk_pembukuan/services/database/database_service.dart';
 
 class EditProfilePage extends StatefulWidget {
   const EditProfilePage({super.key});
@@ -8,21 +11,41 @@ class EditProfilePage extends StatefulWidget {
 }
 
 class _EditProfilePageState extends State<EditProfilePage> {
-  String name = "Capstone Kelompok 4";
-  String gender = "Male";
-  String email = "capstone_kelompok4@gmail.com";
-  String birthDate = "2025-01-01";
+  final _auth = FirebaseAuth.instance;
+  final DatabaseService _dbService = DatabaseService();
+
+  String name = '';
+  String email = '';
+  String username = '';
+  String noHp = '';
 
   final TextEditingController nameController = TextEditingController();
-  final TextEditingController genderController = TextEditingController();
-  final TextEditingController emailController = TextEditingController();
-  final TextEditingController birthDateController = TextEditingController();
+  final TextEditingController noHpController = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    _loadUserProfile();
+  }
+
+  Future<void> _loadUserProfile() async {
+    final uid = _auth.currentUser?.uid;
+    if (uid != null) {
+      final user = await _dbService.getUserFromFirebase(uid);
+      if (user != null) {
+        setState(() {
+          name = user.name;
+          email = user.email;
+          username = user.username;
+          noHp = user.no_hp;
+        });
+      }
+    }
+  }
 
   void _showEditDialog() {
     nameController.text = name;
-    genderController.text = gender;
-    emailController.text = email;
-    birthDateController.text = birthDate;
+    noHpController.text = noHp;
 
     showDialog(
       context: context,
@@ -33,19 +56,11 @@ class _EditProfilePageState extends State<EditProfilePage> {
             children: [
               TextField(
                 controller: nameController,
-                decoration: const InputDecoration(labelText: "Name"),
+                decoration: const InputDecoration(labelText: "Nama"),
               ),
               TextField(
-                controller: genderController,
-                decoration: const InputDecoration(labelText: "Gender"),
-              ),
-              TextField(
-                controller: emailController,
-                decoration: const InputDecoration(labelText: "Email"),
-              ),
-              TextField(
-                controller: birthDateController,
-                decoration: const InputDecoration(labelText: "Tanggal Lahir"),
+                controller: noHpController,
+                decoration: const InputDecoration(labelText: "No. HP"),
               ),
             ],
           ),
@@ -56,14 +71,21 @@ class _EditProfilePageState extends State<EditProfilePage> {
             child: const Text('Batal'),
           ),
           ElevatedButton(
-            onPressed: () {
-              setState(() {
-                name = nameController.text;
-                gender = genderController.text;
-                email = emailController.text;
-                birthDate = birthDateController.text;
-              });
-              Navigator.pop(context);
+            onPressed: () async {
+              final uid = _auth.currentUser?.uid;
+              if (uid != null) {
+                await FirebaseFirestore.instance.collection("Users").doc(uid).update({
+                  'name': nameController.text,
+                  'no_hp': noHpController.text,
+                });
+
+                setState(() {
+                  name = nameController.text;
+                  noHp = noHpController.text;
+                });
+
+                Navigator.pop(context);
+              }
             },
             child: const Text('Simpan'),
           ),
@@ -77,7 +99,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
     return Scaffold(
       appBar: AppBar(
         title: const Text("Edit Profile"),
-        backgroundColor: Colors.blue,
+        backgroundColor: Colors.greenAccent,
       ),
       body: ListView(
         padding: const EdgeInsets.all(16),
@@ -86,23 +108,23 @@ class _EditProfilePageState extends State<EditProfilePage> {
           Container(
             padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 16),
             color: Colors.grey.shade200,
-            child: const Text("BASIC INFORMATION", style: TextStyle(color: Colors.grey)),
+            child: const Text("INFORMASI PROFIL", style: TextStyle(color: Colors.grey)),
           ),
           ListTile(
-            title: const Text("Name"),
+            title: const Text("Nama"),
             subtitle: Text(name),
-          ),
-          ListTile(
-            title: const Text("Gender"),
-            subtitle: Text(gender),
           ),
           ListTile(
             title: const Text("Email"),
             subtitle: Text(email),
           ),
           ListTile(
-            title: const Text("Tanggal Lahir"),
-            subtitle: Text(birthDate),
+            title: const Text("Username"),
+            subtitle: Text(username),
+          ),
+          ListTile(
+            title: const Text("No. HP"),
+            subtitle: Text(noHp),
           ),
           const SizedBox(height: 20),
           ElevatedButton.icon(

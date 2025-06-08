@@ -24,9 +24,13 @@ class _StockPageState extends State<StockPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.blue.shade50,
       appBar: AppBar(
-          title: const Text('Barang/Jasa'), backgroundColor: Colors.blue),
+          title: const Text('Barang/Jasa',
+            style: TextStyle(
+            color: Colors.black,
+              ),
+          ),
+          backgroundColor: Colors.greenAccent),
       body: StreamBuilder<List<StockItem>>(
         stream: dbService.getStockItems(),
         builder: (context, snapshot) {
@@ -71,7 +75,7 @@ class _StockPageState extends State<StockPage> {
         },
       ),
       floatingActionButton: FloatingActionButton(
-        backgroundColor: Colors.blue,
+        backgroundColor: Colors.greenAccent,
         onPressed: () => _navigateToAddPage(),
         child: const Icon(Icons.add),
       ),

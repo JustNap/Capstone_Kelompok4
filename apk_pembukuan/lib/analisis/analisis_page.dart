@@ -61,6 +61,7 @@ class _AnalisisPageState extends State<AnalisisPage> {
       }
     }
 
+    if (!mounted) return;
     setState(() {
       totalStockValue =
           stokList.fold(0.0, (sum, item) => sum + item.totalHarga);
@@ -150,8 +151,15 @@ class _AnalisisPageState extends State<AnalisisPage> {
     final values = sortedKeys.map((e) => monthlySales[e] ?? 0).toList();
 
     return Scaffold(
+      extendBodyBehindAppBar: true,
       appBar: AppBar(
-        title: const Text("Analisis Keuangan"),
+        title: const Text("Analisis Keuangan",
+          style: TextStyle(
+          color: Colors.black,
+            ),
+        ),
+        backgroundColor: Colors.greenAccent,
+        elevation: 0,
         actions: [
           IconButton(
               onPressed: _exportData,

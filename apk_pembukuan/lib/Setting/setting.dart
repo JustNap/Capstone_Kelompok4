@@ -1,9 +1,9 @@
-import 'package:apk_pembukuan/services/auth/auth_gate.dart';
 import 'package:flutter/material.dart';
+import 'package:apk_pembukuan/pages/reset_password_page.dart';
+import 'package:apk_pembukuan/services/auth/auth_gate.dart';
+import 'package:apk_pembukuan/services/auth/auth_service.dart';
 import '../main.dart';
 import './editprofil.dart';
-import 'package:apk_pembukuan/services/auth/auth_service.dart';
-
 
 class SettingPage extends StatefulWidget {
   const SettingPage({super.key});
@@ -17,14 +17,16 @@ class _SettingPageState extends State<SettingPage> {
 
   bool isDarkMode = themeNotifier.value == ThemeMode.dark;
   bool receiveNotifications = true;
-  bool playInBackground = false;
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Settings"),
-        backgroundColor: Colors.blue,
+        title: const Text(
+          "Settings",
+          style: TextStyle(color: Colors.black),
+        ),
+        backgroundColor: Colors.greenAccent,
       ),
       body: ListView(
         padding: const EdgeInsets.all(16),
@@ -47,9 +49,14 @@ class _SettingPageState extends State<SettingPage> {
           ),
           ListTile(
             leading: const Icon(Icons.lock_outline),
-            title: const Text("Change password"),
+            title: const Text("Change Password"),
             trailing: const Icon(Icons.arrow_forward_ios, size: 16),
-            onTap: () {},
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const ResetPasswordPage()),
+              );
+            },
           ),
           const SizedBox(height: 20),
           const Text(
@@ -57,12 +64,16 @@ class _SettingPageState extends State<SettingPage> {
             style: TextStyle(fontWeight: FontWeight.bold, color: Colors.grey),
           ),
           const SizedBox(height: 8),
+
+          // Kebijakan Privasi
           ListTile(
-            leading: const Icon(Icons.language),
-            title: const Text("Language"),
+            leading: const Icon(Icons.privacy_tip_outlined),
+            title: const Text("Privacy Policy"),
             trailing: const Icon(Icons.arrow_forward_ios, size: 16),
-            onTap: () {},
+            onTap: _showPrivacyPolicyDialog,
           ),
+
+          // Dark Mode
           SwitchListTile(
             secondary: const Icon(Icons.brightness_6_outlined),
             title: const Text("Dark Mode"),
@@ -74,9 +85,11 @@ class _SettingPageState extends State<SettingPage> {
               });
             },
           ),
+
+          // Notifications
           SwitchListTile(
             secondary: const Icon(Icons.notifications_none),
-            title: const Text("Received Notifications"),
+            title: const Text("Receive Notifications"),
             value: receiveNotifications,
             onChanged: (val) {
               setState(() {
@@ -84,12 +97,15 @@ class _SettingPageState extends State<SettingPage> {
               });
             },
           ),
+
           const SizedBox(height: 20),
           const Divider(),
           const SizedBox(height: 16),
+
+          // Logout
           ElevatedButton.icon(
             style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.blue,
+              backgroundColor: Colors.greenAccent,
               padding: const EdgeInsets.symmetric(vertical: 14),
             ),
             onPressed: () => _confirmLogout(context),
@@ -108,6 +124,40 @@ class _SettingPageState extends State<SettingPage> {
     );
   }
 
+  // Pop-up Kebijakan Privasi
+  void _showPrivacyPolicyDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text("Kebijakan Privasi",
+          style: TextStyle(
+            color:Colors.black
+          ),
+        ),
+        content: const SingleChildScrollView(
+          child: Text(
+            "Lorem ipsum dolor sit amet, consectetur adipiscing elit. "
+            "Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. "
+            "Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi "
+            "ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit "
+            "in voluptate velit esse cillum dolore eu fugiat nulla pariatur.",
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text("Tutup",
+              style: TextStyle(
+                color:Colors.black
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // Logout
   void _logout(BuildContext context) async {
     try {
       await _auth.logout();
@@ -131,28 +181,16 @@ class _SettingPageState extends State<SettingPage> {
         content: const Text("Apakah Anda yakin ingin logout?"),
         actions: [
           TextButton(
-            onPressed: () => Navigator.of(context).pop(), // Tutup dialog
-            child: const Text(
-              "Batal",
-              style: TextStyle(
-                color: Colors.black,
-              ),
-            ),
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text("Batal", style: TextStyle(color: Colors.red)),
           ),
           ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.blue,
-            ),
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.blue),
             onPressed: () {
-              Navigator.of(context).pop(); // Tutup dialog
-              _logout(context); // Lanjut logout
+              Navigator.of(context).pop();
+              _logout(context);
             },
-            child: const Text(
-              "Logout",
-              style: TextStyle(
-                color: Colors.black,
-              ),
-            ),
+            child: const Text("Logout", style: TextStyle(color: Colors.black)),
           ),
         ],
       ),

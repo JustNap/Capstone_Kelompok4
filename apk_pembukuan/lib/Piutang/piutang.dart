@@ -52,7 +52,11 @@ class _PiutangPageState extends State<PiutangPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Piutang'),
+        title: Text('Piutang',
+          style: TextStyle(
+          color: Colors.black,
+              ),
+        ),
         actions: [
           TextButton(
             onPressed: () async {
@@ -69,7 +73,7 @@ class _PiutangPageState extends State<PiutangPage> {
             child: Icon (Icons.add, color: Colors.black),
           ),
         ],
-        backgroundColor: Colors.blue,
+        backgroundColor: Colors.greenAccent,
       ),
       body: Padding(
         padding: const EdgeInsets.all(16),

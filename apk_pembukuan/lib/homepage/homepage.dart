@@ -164,7 +164,7 @@ class _HomepageState extends State<Homepage> {
       body: SafeArea(child: _pages[_currentIndex]),
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _currentIndex,
-        selectedItemColor: Colors.blueAccent,
+        selectedItemColor: Colors.greenAccent,
         unselectedItemColor: Colors.grey,
         onTap: (index) {
           setState(() {

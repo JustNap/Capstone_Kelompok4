@@ -79,8 +79,12 @@ class _PenjualanPageState extends State<PenjualanPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Penjualan'),
-        backgroundColor: Colors.blue,
+        title: const Text('Penjualan',
+          style: TextStyle(
+          color: Colors.black,
+              ),
+        ),
+        backgroundColor: Colors.greenAccent,
       ),
       body: isLoading
           ? const Center(child: CircularProgressIndicator())
@@ -129,7 +133,7 @@ class _PenjualanPageState extends State<PenjualanPage> {
                 ),
       floatingActionButton: FloatingActionButton(
         onPressed: _bukaFormTambah,
-        backgroundColor: Colors.blue,
+        backgroundColor: Colors.greenAccent,
         child: const Icon(Icons.add),
       ),
     );
