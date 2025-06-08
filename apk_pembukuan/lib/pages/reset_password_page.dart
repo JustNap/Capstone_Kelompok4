@@ -34,7 +34,14 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
-      appBar: AppBar(title: const Text("Reset Password")),
+      appBar: AppBar(
+        title: const Text("Reset Password",
+          style: TextStyle(
+            color: Colors.black,
+          ),
+        ),
+        backgroundColor: Colors.greenAccent,
+      ),
       body: Padding(
         padding: const EdgeInsets.all(25.0),
         child: Center(
@@ -57,7 +64,7 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Icon(Icons.lock_reset_rounded,
-                        color: Colors.blueAccent, size: 64),
+                        color: Colors.greenAccent, size: 64),
                     const SizedBox(height: 20),
                     Text(
                       "Enter your email to reset password",

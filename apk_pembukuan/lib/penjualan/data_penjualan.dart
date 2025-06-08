@@ -93,8 +93,12 @@ class _DataPenjualanPageState extends State<DataPenjualanPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Pilih Barang'),
-        backgroundColor: Colors.blue,
+        title: const Text('Pilih Barang',
+          style: TextStyle(
+          color: Colors.black,
+              ),
+        ),
+        backgroundColor: Colors.greenAccent,
       ),
       body: isLoading
           ? const Center(child: CircularProgressIndicator())

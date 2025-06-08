@@ -12,7 +12,7 @@ class FinancialReportPage extends StatefulWidget {
 class _FinancialReportPageState extends State<FinancialReportPage>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
-  String _selectedPeriod = 'Mei 2025';
+  String _selectedPeriod = 'Juni 2025';
 
   final List<String> _availablePeriods = [
     'Januari 2025', 'Februari 2025', 'Maret 2025',
@@ -66,10 +66,18 @@ class _FinancialReportPageState extends State<FinancialReportPage>
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Laporan Keuangan'),
+        title: const Text('Laporan Keuangan',
+          style: TextStyle(
+          color: Colors.black,
+              ),
+        ),
+        backgroundColor: Colors.greenAccent,
         centerTitle: true,
         bottom: TabBar(
           controller: _tabController,
+          labelColor: Colors.black,
+          unselectedLabelColor: Colors.black54,
+          indicatorColor: Colors.blue,
           tabs: const [
             Tab(text: 'Ringkasan'),
             Tab(text: 'Rincian'),

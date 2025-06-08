@@ -76,7 +76,7 @@ class _LoginPageState extends State<LoginPage> {
                       children: [
                         const SizedBox(height: 50),
                         Icon(Icons.lock_open_rounded,
-                            size: 72, color: Colors.blueAccent),
+                            size: 72, color: Colors.greenAccent),
                         const SizedBox(height: 20),
                         Text(
                           "Welcome Back!",
@@ -124,7 +124,7 @@ class _LoginPageState extends State<LoginPage> {
                           child: ElevatedButton(
                             onPressed: login,
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.blueAccent,
+                              backgroundColor: Colors.greenAccent,
                               padding: const EdgeInsets.symmetric(
                                   vertical: 18, horizontal: 20),
                               shape: RoundedRectangleBorder(

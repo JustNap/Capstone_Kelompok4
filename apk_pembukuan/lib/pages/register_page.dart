@@ -86,7 +86,7 @@ class _RegisterPageState extends State<RegisterPage> {
                       children: [
                         const SizedBox(height: 40),
                         const Icon(Icons.person_add_alt_1,
-                            size: 72, color: Colors.blueAccent),
+                            size: 72, color: Colors.greenAccent),
                         const SizedBox(height: 20),
                         const Text(
                           "Create your account",
@@ -140,7 +140,7 @@ class _RegisterPageState extends State<RegisterPage> {
                         MyButton(
                           text: "Register",
                           onTap: register,
-                          color: Colors.blueAccent.withOpacity(0.1),
+                          color: Colors.greenAccent.withOpacity(0.1),
                         ),
                         const SizedBox(height: 30),
 

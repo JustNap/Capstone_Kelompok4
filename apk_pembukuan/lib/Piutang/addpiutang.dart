@@ -34,7 +34,12 @@ class _TambahPiutangPageState extends State<AddPiutangPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text("Tambah Piutang")),
+      appBar: AppBar(title: Text("Tambah Piutang",
+        style: TextStyle(
+          color: Colors.black,
+              ),
+      ),
+      backgroundColor: Colors.greenAccent,),
       body: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
